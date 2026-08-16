@@ -18,11 +18,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.model.*
 import hihihiha.semchik2017.gymtracker.domain.usecase.RecommendationResult
 import hihihiha.semchik2017.gymtracker.domain.usecase.CalculateStatsUseCase
@@ -36,15 +38,14 @@ fun WorkoutDetailScreen(
     onBack: () -> Unit,
     viewModel: WorkoutDetailViewModel = hiltViewModel()
 ) {
-    val workoutWithExercises by viewModel.workoutWithExercises.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val allExercises by viewModel.allExercises.collectAsState()
-    val recommendations by viewModel.recommendations.collectAsState()
     val timerSeconds by viewModel.timerSeconds.collectAsState()
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showCompleteConfirmDialog by remember { mutableStateOf(false) }
 
-    val isCompleted = workoutWithExercises?.workout?.isCompleted == true
+    val isCompleted = uiState.workoutWithExercises?.workout?.isCompleted == true
 
     LaunchedEffect(workoutId) {
         viewModel.loadWorkout(workoutId)
@@ -56,18 +57,18 @@ fun WorkoutDetailScreen(
                 title = { 
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(workoutWithExercises?.workout?.name ?: "Тренировка")
+                            Text(uiState.workoutWithExercises?.workout?.name ?: stringResource(R.string.nav_workouts))
                             if (isCompleted) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
                                     Icons.Default.CheckCircle, 
-                                    contentDescription = "Завершена",
+                                    contentDescription = stringResource(R.string.workout_completed_badge),
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
-                        workoutWithExercises?.workout?.date?.let {
+                        uiState.workoutWithExercises?.workout?.date?.let {
                             Text(
                                 SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(it)),
                                 style = MaterialTheme.typography.labelSmall
@@ -77,7 +78,7 @@ fun WorkoutDetailScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.workout_cancel))
                     }
                 },
                 actions = {
@@ -94,7 +95,7 @@ fun WorkoutDetailScreen(
                                 Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = String.format("%02d:%02d", timerSeconds / 60, timerSeconds % 60),
+                                    text = String.format(Locale.getDefault(), "%02d:%02d", timerSeconds / 60, timerSeconds % 60),
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -103,7 +104,7 @@ fun WorkoutDetailScreen(
                     }
                     if (!isCompleted) {
                         IconButton(onClick = { showRenameDialog = true }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Переименовать")
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.workout_rename))
                         }
                         Button(
                             onClick = { showCompleteConfirmDialog = true },
@@ -113,7 +114,7 @@ fun WorkoutDetailScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Text("Завершить", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.workout_complete), fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -122,28 +123,38 @@ fun WorkoutDetailScreen(
         floatingActionButton = {
             if (!isCompleted) {
                 FloatingActionButton(onClick = { showAddExerciseDialog = true }) {
-                    Icon(Icons.Default.Add, contentDescription = "Добавить упражнение")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.workout_add_exercise))
                 }
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            val exercises = workoutWithExercises?.exercises?.sortedBy { it.workoutExercise.orderIndex } ?: emptyList()
-                    items(exercises) { exerciseWithSets ->
-                ExerciseCard(
-                    exerciseWithSets = exerciseWithSets,
-                    recommendation = recommendations[exerciseWithSets.workoutExercise.id],
-                    readOnly = isCompleted,
-                    onAddSet = { side -> viewModel.addSet(exerciseWithSets.workoutExercise.id, side) },
-                    onUpdateSet = { viewModel.updateSet(it) },
-                    onCompleteSet = { viewModel.completeSet(it) },
-                    onDeleteSet = { viewModel.deleteSet(it) },
-                    calculateStatsUseCase = viewModel.calculateStatsUseCase
-                )
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+            ) {
+                val exercises = uiState.workoutWithExercises?.exercises?.sortedBy { it.workoutExercise.orderIndex } ?: emptyList()
+                items(exercises) { exerciseWithSets ->
+                    ExerciseCard(
+                        exerciseWithSets = exerciseWithSets,
+                        recommendation = uiState.recommendations[exerciseWithSets.workoutExercise.id],
+                        readOnly = isCompleted,
+                        onAddSet = { side -> viewModel.addSet(exerciseWithSets.workoutExercise.id, side) },
+                        onUpdateSet = { viewModel.updateSet(it) },
+                        onCompleteSet = { viewModel.completeSet(it) },
+                        onDeleteSet = { viewModel.deleteSet(it) },
+                        calculateStatsUseCase = viewModel.calculateStatsUseCase
+                    )
+                }
             }
         }
     }
@@ -151,19 +162,19 @@ fun WorkoutDetailScreen(
     if (showCompleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showCompleteConfirmDialog = false },
-            title = { Text("Завершить тренировку?") },
-            text = { Text("После завершения тренировку нельзя будет редактировать, и её данные попадут в статистику и рекомендации.") },
+            title = { Text(stringResource(R.string.workout_complete_title)) },
+            text = { Text(stringResource(R.string.workout_complete_msg)) },
             confirmButton = {
                 Button(onClick = {
                     viewModel.completeWorkout()
                     showCompleteConfirmDialog = false
                 }) {
-                    Text("Да, завершить")
+                    Text(stringResource(R.string.workout_complete_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCompleteConfirmDialog = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.workout_cancel))
                 }
             }
         )
@@ -171,7 +182,7 @@ fun WorkoutDetailScreen(
 
     if (showRenameDialog) {
         RenameWorkoutDialog(
-            currentName = workoutWithExercises?.workout?.name ?: "",
+            currentName = uiState.workoutWithExercises?.workout?.name ?: "",
             onDismiss = { showRenameDialog = false },
             onConfirm = {
                 viewModel.updateWorkoutName(it)
@@ -218,7 +229,7 @@ fun ExerciseCard(
                 val totalVolume = calculateStatsUseCase.calculateTotalVolume(exerciseWithSets.sets.filter { it.isCompleted })
                 if (totalVolume > 0) {
                     Text(
-                        "Объем: ${totalVolume} кг",
+                        stringResource(R.string.workout_volume_label, totalVolume.toInt()),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.secondary
                     )
@@ -227,11 +238,11 @@ fun ExerciseCard(
             
             recommendation?.let { rec ->
                 val text = when (rec) {
-                    is RecommendationResult.Bilateral -> "Рекомендуемый вес: ${rec.weight} кг"
+                    is RecommendationResult.Bilateral -> stringResource(R.string.set_recommendation, rec.weight.toString())
                     is RecommendationResult.Unilateral -> {
                         val left = rec.leftWeight?.let { "Л: $it кг" } ?: ""
                         val right = rec.rightWeight?.let { "П: $it кг" } ?: ""
-                        "Рекомендация: $left $right".trim()
+                        stringResource(R.string.set_recommendation_unilateral, "$left $right".trim())
                     }
                     else -> null
                 }
@@ -258,22 +269,22 @@ fun ExerciseCard(
             
             if (isUnilateral) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("Левая сторона", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.exercise_side_left), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.LEFT }.forEach { set ->
                         SetRow(set, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
                     }
                     if (!readOnly) {
-                        TextButton(onClick = { onAddSet(SetSide.LEFT) }) { Text("+ Подход (Л)") }
+                        TextButton(onClick = { onAddSet(SetSide.LEFT) }) { Text(stringResource(R.string.set_add_left_btn)) }
                     }
                     
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     
-                    Text("Правая сторона", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.exercise_side_right), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.RIGHT }.forEach { set ->
                         SetRow(set, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
                     }
                     if (!readOnly) {
-                        TextButton(onClick = { onAddSet(SetSide.RIGHT) }) { Text("+ Подход (П)") }
+                        TextButton(onClick = { onAddSet(SetSide.RIGHT) }) { Text(stringResource(R.string.set_add_right_btn)) }
                     }
                 }
             } else {
@@ -282,7 +293,7 @@ fun ExerciseCard(
                 }
                 if (!readOnly) {
                     Button(onClick = { onAddSet(SetSide.BOTH) }, modifier = Modifier.padding(top = 8.dp)) { 
-                        Text("+ Подход") 
+                        Text(stringResource(R.string.set_add_btn)) 
                     }
                 }
             }
@@ -299,7 +310,14 @@ fun SetRow(
     onDeleteSet: (ExerciseSet) -> Unit,
     calculateStatsUseCase: CalculateStatsUseCase
 ) {
-    var weightText by remember(set.id) { mutableStateOf(set.weight?.toString() ?: "") }
+    // Formatting helper to avoid .0 when not needed
+    fun formatDouble(d: Double?): String = when {
+        d == null -> ""
+        d % 1.0 == 0.0 -> d.toInt().toString()
+        else -> d.toString()
+    }
+
+    var weightText by remember(set.id) { mutableStateOf(formatDouble(set.weight)) }
     var repsText by remember(set.id) { mutableStateOf(set.reps.toString()) }
     var noteText by remember(set.id) { mutableStateOf(set.note ?: "") }
     var showNote by remember { mutableStateOf(set.note?.isNotBlank() == true) }
@@ -325,7 +343,7 @@ fun SetRow(
                 enabled = !isSetReadOnly,
                 modifier = Modifier.width(90.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                label = { Text("кг") },
+                label = { Text(stringResource(R.string.set_label_kg)) },
                 singleLine = true
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -343,19 +361,19 @@ fun SetRow(
                 enabled = !isSetReadOnly,
                 modifier = Modifier.width(80.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                label = { Text("повт") },
+                label = { Text(stringResource(R.string.set_label_reps)) },
                 singleLine = true
             )
             
             if (!isSetReadOnly) {
                 IconButton(onClick = { onCompleteSet(set) }) {
-                    Icon(Icons.Default.Done, contentDescription = "Завершить подход", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Done, contentDescription = stringResource(R.string.workout_complete), tint = MaterialTheme.colorScheme.primary)
                 }
                 IconButton(onClick = { showNote = !showNote }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Заметка", modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.set_note_hint), modifier = Modifier.size(20.dp))
                 }
                 IconButton(onClick = { onDeleteSet(set) }) {
-                    Icon(Icons.Default.Delete, contentDescription = "Удалить подход")
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel))
                 }
             } else if (set.isCompleted) {
                 Icon(
@@ -384,7 +402,7 @@ fun SetRow(
                 },
                 enabled = !isSetReadOnly,
                 modifier = Modifier.fillMaxWidth().padding(start = 28.dp, bottom = 8.dp),
-                label = { Text("Заметка") },
+                label = { Text(stringResource(R.string.set_note_hint)) },
                 textStyle = MaterialTheme.typography.bodySmall
             )
         }
@@ -401,22 +419,22 @@ fun RenameWorkoutDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Переименовать тренировку") },
+        title = { Text(stringResource(R.string.workout_rename)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Название") },
+                label = { Text(stringResource(R.string.workout_rename)) },
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
             Button(onClick = { onConfirm(name) }) {
-                Text("Сохранить")
+                Text(stringResource(R.string.weight_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.workout_cancel)) }
         }
     )
 }

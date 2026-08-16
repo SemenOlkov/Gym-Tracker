@@ -6,18 +6,22 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
+import kotlinx.serialization.Serializable
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
-    object Workouts : Screen("workouts", "Тренировки", Icons.Default.FitnessCenter)
-    object Exercises : Screen("exercises", "Упражнения", Icons.Default.List)
-    object Stats : Screen("stats", "Графики", Icons.Default.BarChart)
-    object Weight : Screen("weight", "Вес тела", Icons.Default.Person)
+sealed interface Screen {
+    @Serializable object Workouts : Screen
+    @Serializable object Exercises : Screen
+    @Serializable object Weight : Screen
     
-    object ExerciseDetail : Screen("exercise_detail/{exerciseId}", "Детали упражнения") {
-        fun createRoute(exerciseId: Long) = "exercise_detail/$exerciseId"
-    }
+    @Serializable 
+    data class ExerciseDetail(val exerciseId: Long) : Screen
 
-    object WorkoutDetail : Screen("workout_detail/{workoutId}", "Детали тренировки") {
-        fun createRoute(workoutId: Long) = "workout_detail/$workoutId"
-    }
+    @Serializable 
+    data class WorkoutDetail(val workoutId: Long) : Screen
 }
+
+data class BottomNavItem(
+    val route: Any,
+    val titleRes: Int,
+    val icon: ImageVector
+)

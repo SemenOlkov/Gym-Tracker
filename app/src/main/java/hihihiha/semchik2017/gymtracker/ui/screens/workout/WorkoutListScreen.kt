@@ -12,9 +12,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.model.Workout
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,42 +26,45 @@ fun WorkoutListScreen(
     onWorkoutClick: (Long) -> Unit,
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
-    val workouts by viewModel.workouts.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
-
-    val groupedWorkouts = remember(workouts) {
-        workouts.groupBy { workout ->
-            val cal = Calendar.getInstance().apply { timeInMillis = workout.date }
-            SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(cal.time)
-        }
-    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Новая тренировка")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.workout_new))
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            groupedWorkouts.forEach { (month, monthWorkouts) ->
-                item {
-                    Text(
-                        text = month,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-                items(monthWorkouts) { workout ->
-                    WorkoutItem(
-                        workout = workout,
-                        onClick = { onWorkoutClick(workout.id) },
-                        onDelete = { viewModel.deleteWorkout(workout) }
-                    )
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                uiState.groupedWorkouts.forEach { (month, monthWorkouts) ->
+                    item {
+                        Text(
+                            text = month,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                    items(monthWorkouts) { workout ->
+                        WorkoutItem(
+                            workout = workout,
+                            onClick = { onWorkoutClick(workout.id) },
+                            onDelete = { viewModel.deleteWorkout(workout) }
+                        )
+                    }
                 }
             }
         }
@@ -82,22 +87,22 @@ fun CreateWorkoutDialog(onDismiss: () -> Unit, onConfirm: (String) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новая тренировка") },
+        title = { Text(stringResource(R.string.workout_new)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Название (например: Спина и Бицепс)") },
+                label = { Text(stringResource(R.string.workout_name_hint)) },
                 modifier = Modifier.fillMaxWidth()
             )
         },
         confirmButton = {
             Button(onClick = { onConfirm(name) }, enabled = name.isNotBlank()) {
-                Text("Создать")
+                Text(stringResource(R.string.workout_create))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.workout_cancel)) }
         }
     )
 }
@@ -149,12 +154,12 @@ fun WorkoutItem(
                     }
                 }
                 Text(
-                    text = if (workout.name == null && workout.isCompleted) "✓ Тренировка $dateStr" else "Тренировка $dateStr",
+                    text = if (workout.name == null && workout.isCompleted) "✓ " + stringResource(R.string.workout_default_name, dateStr) else stringResource(R.string.workout_default_name, dateStr),
                     style = if (workout.name == null) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodySmall
                 )
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel))
             }
         }
     }

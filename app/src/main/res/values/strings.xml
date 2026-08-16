@@ -1,3 +1,144 @@
 <resources>
     <string name="app_name">Gym Tracker</string>
+
+    <!-- Navigation -->
+    <string name="nav_workouts">Тренировки</string>
+    <string name="nav_exercises">Упражнения</string>
+    <string name="nav_weight">Вес тела</string>
+
+    <!-- Workout List -->
+    <string name="workout_new">Новая тренировка</string>
+    <string name="workout_delete_confirm">Удалить тренировку?</string>
+    <string name="workout_name_hint">Название (например: Спина и Бицепс)</string>
+    <string name="workout_create">Создать</string>
+    <string name="workout_cancel">Отмена</string>
+    <string name="workout_default_name">Тренировка %s</string>
+
+    <!-- Workout Detail -->
+    <string name="workout_complete">Завершить</string>
+    <string name="workout_complete_title">Завершить тренировку?</string>
+    <string name="workout_complete_msg">После завершения тренировку нельзя будет редактировать, и её данные попадут в статистику и рекомендации.</string>
+    <string name="workout_complete_confirm">Да, завершить</string>
+    <string name="workout_rename">Переименовать</string>
+    <string name="workout_add_exercise">Добавить упражнение</string>
+    <string name="workout_completed_badge">Завершена</string>
+    <string name="workout_volume_label">Объем: %d кг</string>
+
+    <!-- Exercise Detail -->
+    <string name="exercise_muscle_groups">Группы мышц:</string>
+    <string name="exercise_instructions">Инструкция:</string>
+    <string name="exercise_last_workout">Последняя тренировка:</string>
+    <string name="exercise_last_workout_never">Никогда</string>
+    <string name="exercise_pr">Личный рекорд (PR):</string>
+    <string name="exercise_no_data">Данных нет</string>
+    <string name="exercise_rec_weight">Текущая рекомендация:</string>
+    <string name="exercise_progress_chart">График прогресса:</string>
+    <string name="exercise_progress_max_weight">Прогресс Макс. Веса</string>
+    <string name="exercise_history_title">История объема и 1RM:</string>
+    <string name="exercise_side_left">Лево</string>
+    <string name="exercise_side_right">Право</string>
+
+    <!-- Sets -->
+    <string name="set_label_kg">кг</string>
+    <string name="set_label_reps">повт</string>
+    <string name="set_add_btn">+ Подход</string>
+    <string name="set_add_left_btn">+ Подход (Л)</string>
+    <string name="set_add_right_btn">+ Подход (П)</string>
+    <string name="set_note_hint">Заметка</string>
+    <string name="set_recommendation">Рекомендуемый вес: %s кг</string>
+    <string name="set_recommendation_unilateral">Рекомендация: %s</string>
+    <string name="set_no_weight">Без веса</string>
+
+    <!-- Weight Tracking -->
+    <string name="weight_chart_title">График веса</string>
+    <string name="weight_add_title">Записать вес тела</string>
+    <string name="weight_hint">Вес (кг)</string>
+    <string name="weight_save">Сохранить</string>
+    <string name="weight_unit">%s кг</string>
+
+    <!-- Error Handling -->
+    <string name="error_db_load">Ошибка при загрузке данных</string>
+    <string name="error_db_save">Ошибка при сохранении</string>
+    <string name="error_unknown">Произошла непредвиденная ошибка</string>
+
+    <!-- Predefined Exercises -->
+    <string name="ex_bench_press">Жим лежа</string>
+    <string name="ex_bench_press_muscles">Грудь, Трицепс, Передняя дельта</string>
+    <string name="ex_bench_press_instr">Лягте на скамью, возьмитесь за штангу хватом чуть шире плеч. Опустите штангу до касания груди и мощно выжмите вверх.</string>
+
+    <string name="ex_dumbell_fly">Разведение гантелей лежа</string>
+    <string name="ex_dumbell_fly_muscles">Грудь (изоляция)</string>
+    <string name="ex_dumbell_fly_instr">Лёжа на скамье, разведите руки с гантелями в стороны, слегка согнув их в локтях. Сведите гантели над собой за счёт сокращения грудных мышц.</string>
+
+    <string name="ex_gravitron_pullup">Подтягивания на гравитроне</string>
+    <string name="ex_gravitron_pullup_muscles">Широчайшие, Бицепс</string>
+    <string name="ex_gravitron_pullup_instr">Встаньте на платформу, возьмитесь за перекладину. Подтянитесь, стараясь коснуться грудью перекладины. Чем больше вес противовеса, тем легче.</string>
+
+    <string name="ex_gravitron_dip">Отжимания на брусьях на гравитроне</string>
+    <string name="ex_gravitron_dip_muscles">Трицепс, Грудь, Плечи</string>
+    <string name="ex_gravitron_dip_instr">Упритесь руками в брусья, колени на платформу. Опуститесь до угла 90 градусов в локтях и выжмите себя вверх.</string>
+
+    <string name="ex_pec_deck">Сведение в пэк деке (бабочка) на грудь</string>
+    <string name="ex_pec_deck_muscles">Грудь</string>
+    <string name="ex_pec_deck_instr">Сядьте в тренажер, упритесь предплечьями или кистями в подушки. Сведите руки перед собой, максимально напрягая грудь.</string>
+
+    <string name="ex_wrist_curl">Сгибание кистей со штангой</string>
+    <string name="ex_wrist_curl_muscles">Предплечья (внутренняя часть)</string>
+    <string name="ex_wrist_curl_instr">Положите предплечья на бедра или скамью ладонями вверх. Сгибайте только кисти, поднимая штангу.</string>
+
+    <string name="ex_rev_wrist_curl">Сгибание кистей со штангой обратным хватом</string>
+    <string name="ex_rev_wrist_curl_muscles">Предплечья (внешняя часть)</string>
+    <string name="ex_rev_wrist_curl_instr">Положите предплечья на скамью ладонями вниз. Разгибайте кисти вверх, поднимая штангу.</string>
+
+    <string name="ex_rev_bicep_curl">Подъем на бицепс обратным хватом</string>
+    <string name="ex_rev_bicep_curl_muscles">Бицепс, Брахиалис, Предплечья</string>
+    <string name="ex_rev_bicep_curl_instr">Возьмите штангу хватом сверху (ладони вниз). Поднимайте штангу к плечам, не раскачиваясь.</string>
+
+    <string name="ex_scott_curl">Подъем на бицепс на скамье Скотта</string>
+    <string name="ex_scott_curl_muscles">Бицепс (нижняя часть)</string>
+    <string name="ex_scott_curl_instr">Расположите руки на подушке скамьи Скотта. Медленно опускайте штангу и подконтрольно поднимайте вверх.</string>
+
+    <string name="ex_tricep_pushdown">Тяга верхнего блока на трицепс</string>
+    <string name="ex_tricep_pushdown_muscles">Трицепс</string>
+    <string name="ex_tricep_pushdown_instr">Возьмитесь за рукоять верхнего блока. Прижмите локти к корпусу и разгибайте руки до полного выпрямления.</string>
+
+    <string name="ex_upper_abs">Верхний пресс</string>
+    <string name="ex_upper_abs_muscles">Пресс (верхняя часть)</string>
+    <string name="ex_upper_abs_instr">Лёжа на полу, ноги согнуты. Поднимайте только лопатки, максимально скручивая пресс.</string>
+
+    <string name="ex_lower_abs">Нижний пресс</string>
+    <string name="ex_lower_abs_muscles">Пресс (нижняя часть)</string>
+    <string name="ex_lower_abs_instr">Лёжа на полу, поднимайте ноги до вертикального положения, слегка отрывая таз от пола.</string>
+
+    <string name="ex_hack_squat_back">Приседания в хаке спиной к тренажеру</string>
+    <string name="ex_hack_squat_back_muscles">Квадрицепс, Ягодицы</string>
+    <string name="ex_hack_squat_back_instr">Плотно прижмитесь спиной к спинке, стопы на платформе. Плавно приседайте и мощно вставайте.</string>
+
+    <string name="ex_hack_squat_front">Приседание в хаке лицом к тренажеру</string>
+    <string name="ex_hack_squat_front_muscles">Ягодицы, Бицепс бедра</string>
+    <string name="ex_hack_squat_front_instr">Упритесь грудью в спинку, стопы широко на платформе. Отводите таз назад при приседании.</string>
+
+    <string name="ex_horiz_row">Тяга горизонтального блока</string>
+    <string name="ex_horiz_row_muscles">Спина (ширина и толщина)</string>
+    <string name="ex_horiz_row_instr">Сядьте, упритесь ногами. Тяните рукоять к животу, сводя лопатки. Не отклоняйтесь сильно назад.</string>
+
+    <string name="ex_lat_pulldown">Тяга вертикального блока</string>
+    <string name="ex_lat_pulldown_muscles">Широчайшие</string>
+    <string name="ex_lat_pulldown_instr">Возьмитесь за рукоять широким хватом. Тяните её к верхней части груди, сводя лопатки.</string>
+
+    <string name="ex_leg_press">Жим ногами</string>
+    <string name="ex_leg_press_muscles">Ноги (все мышцы)</string>
+    <string name="ex_leg_press_instr">Выжимайте платформу ногами, не выпрямляя колени до конца в верхней точке.</string>
+
+    <string name="ex_one_leg_press">Жим одной ногой</string>
+    <string name="ex_one_leg_press_muscles">Квадрицепс, Ягодицы</string>
+    <string name="ex_one_leg_press_instr">Выполняйте жим поочередно каждой ногой для устранения дисбаланса.</string>
+
+    <string name="ex_leg_extension">Разгибание ног</string>
+    <string name="ex_leg_extension_muscles">Квадрицепс</string>
+    <string name="ex_leg_extension_instr">Сядьте в тренажер, разгибайте ноги до полного сокращения квадрицепсов.</string>
+
+    <string name="ex_one_leg_extension">Разгибание одной ногой</string>
+    <string name="ex_one_leg_extension_muscles">Квадрицепс</string>
+    <string name="ex_one_leg_extension_instr">Разгибайте ноги по очереди для более глубокой проработки.</string>
 </resources>

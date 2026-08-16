@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -24,6 +25,7 @@ import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.model.BodyWeight
 import java.text.SimpleDateFormat
 import java.util.*
@@ -32,16 +34,16 @@ import java.util.*
 fun WeightScreen(
     viewModel: WeightViewModel = hiltViewModel()
 ) {
-    val weightHistory by viewModel.weightHistory.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     
     val modelProducer = remember { CartesianChartModelProducer() }
 
-    LaunchedEffect(weightHistory) {
-        if (weightHistory.isNotEmpty()) {
+    LaunchedEffect(uiState.weightHistory) {
+        if (uiState.weightHistory.isNotEmpty()) {
             modelProducer.runTransaction {
                 lineSeries {
-                    series(weightHistory.reversed().map { it.weight })
+                    series(uiState.weightHistory.reversed().map { it.weight })
                 }
             }
         }
@@ -50,51 +52,59 @@ fun WeightScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Записать вес")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.weight_add_title))
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
-            if (weightHistory.isNotEmpty()) {
-                Text(
-                    "График веса",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
-                CartesianChartHost(
-                    chart = rememberCartesianChart(
-                        rememberLineCartesianLayer(),
-                        startAxis = rememberStartAxis(
-                            label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
-                            title = "Вес (кг)",
-                            titleComponent = rememberTextComponent(color = MaterialTheme.colorScheme.secondary)
-                        ),
-                        bottomAxis = rememberBottomAxis(
-                            label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
-                            title = "Дата",
-                            titleComponent = rememberTextComponent(color = MaterialTheme.colorScheme.secondary)
-                        ),
-                        marker = rememberDefaultCartesianMarker(
-                            label = rememberTextComponent(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                background = rememberShapeComponent(
-                                    color = MaterialTheme.colorScheme.surfaceContainer,
-                                    shape = com.patrykandpatrick.vico.core.common.shape.Shape.Rectangle
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            Column(modifier = Modifier.padding(padding).fillMaxSize()) {
+                if (uiState.weightHistory.isNotEmpty()) {
+                    Text(
+                        stringResource(R.string.weight_chart_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                    CartesianChartHost(
+                        chart = rememberCartesianChart(
+                            rememberLineCartesianLayer(),
+                            startAxis = rememberStartAxis(
+                                label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
+                                title = stringResource(R.string.set_label_kg),
+                                titleComponent = rememberTextComponent(color = MaterialTheme.colorScheme.secondary)
+                            ),
+                            bottomAxis = rememberBottomAxis(
+                                label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
+                            ),
+                            marker = rememberDefaultCartesianMarker(
+                                label = rememberTextComponent(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    background = rememberShapeComponent(
+                                        color = MaterialTheme.colorScheme.surfaceContainer,
+                                        shape = com.patrykandpatrick.vico.core.common.shape.Shape.Rectangle
+                                    )
                                 )
                             )
-                        )
-                    ),
-                    modelProducer = modelProducer,
-                    modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp)
-                )
-            }
-            
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(weightHistory) { entry ->
-                    WeightItem(
-                        entry = entry,
-                        onDelete = { viewModel.deleteWeight(entry) }
+                        ),
+                        modelProducer = modelProducer,
+                        modifier = Modifier.fillMaxWidth().height(250.dp).padding(horizontal = 16.dp)
                     )
+                }
+                
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(uiState.weightHistory) { entry ->
+                        WeightItem(
+                            entry = entry,
+                            onDelete = { viewModel.deleteWeight(entry) }
+                        )
+                    }
                 }
             }
         }
@@ -129,10 +139,10 @@ fun WeightItem(entry: BodyWeight, onDelete: () -> Unit) {
         ) {
             Column {
                 Text(text = dateStr, style = MaterialTheme.typography.bodyLarge)
-                Text(text = "${entry.weight} кг", style = MaterialTheme.typography.titleMedium)
+                Text(text = stringResource(R.string.weight_unit, entry.weight.toString()), style = MaterialTheme.typography.titleMedium)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel), tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -144,12 +154,12 @@ fun AddWeightDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Записать вес тела") },
+        title = { Text(stringResource(R.string.weight_add_title)) },
         text = {
             OutlinedTextField(
                 value = weightStr,
                 onValueChange = { weightStr = it.replace(',', '.') },
-                label = { Text("Вес (кг)") },
+                label = { Text(stringResource(R.string.weight_hint)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -159,11 +169,11 @@ fun AddWeightDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
                 onClick = { weightStr.toDoubleOrNull()?.let { onConfirm(it) } },
                 enabled = weightStr.toDoubleOrNull() != null
             ) {
-                Text("Сохранить")
+                Text(stringResource(R.string.weight_save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.workout_cancel)) }
         }
     )
 }

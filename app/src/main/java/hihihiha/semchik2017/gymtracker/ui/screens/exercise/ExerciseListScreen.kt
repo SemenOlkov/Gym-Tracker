@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.model.Exercise
 import hihihiha.semchik2017.gymtracker.data.model.Laterality
 
@@ -23,23 +25,33 @@ fun ExerciseListScreen(
     onExerciseClick: (Long) -> Unit,
     viewModel: ExerciseViewModel = hiltViewModel()
 ) {
-    val allExercises by viewModel.allExercises.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Создать упражнение")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.workout_create))
             }
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
-            items(allExercises) { exercise ->
-                ExerciseItem(
-                    exercise = exercise,
-                    onClick = { onExerciseClick(exercise.id) },
-                    onDelete = if (exercise.isCustom) { { viewModel.deleteExercise(exercise) } } else null
-                )
+        if (uiState.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.errorMessage != null) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(uiState.errorMessage!!, color = MaterialTheme.colorScheme.error)
+            }
+        } else {
+            LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
+                items(uiState.exercises) { exercise ->
+                    ExerciseItem(
+                        exercise = exercise,
+                        onClick = { onExerciseClick(exercise.id) },
+                        onDelete = if (exercise.isCustom) { { viewModel.deleteExercise(exercise) } } else null
+                    )
+                }
             }
         }
     }

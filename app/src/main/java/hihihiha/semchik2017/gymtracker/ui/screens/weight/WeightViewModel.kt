@@ -5,9 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import hihihiha.semchik2017.gymtracker.data.model.BodyWeight
 import hihihiha.semchik2017.gymtracker.domain.repository.GymRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -16,18 +14,42 @@ class WeightViewModel @Inject constructor(
     private val repository: GymRepository
 ) : ViewModel() {
 
-    val weightHistory: StateFlow<List<BodyWeight>> = repository.getAllBodyWeights()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _uiState = MutableStateFlow(WeightUiState(isLoading = true))
+    val uiState: StateFlow<WeightUiState> = _uiState.asStateFlow()
+
+    init {
+        loadWeightHistory()
+    }
+
+    private fun loadWeightHistory() {
+        viewModelScope.launch {
+            repository.getAllBodyWeights()
+                .catch { e ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = e.message)
+                }
+                .collect { history ->
+                    _uiState.value = _uiState.value.copy(isLoading = false, weightHistory = history, errorMessage = null)
+                }
+        }
+    }
 
     fun addWeight(weight: Double) {
         viewModelScope.launch {
-            repository.insertBodyWeight(BodyWeight(date = System.currentTimeMillis(), weight = weight))
+            try {
+                repository.insertBodyWeight(BodyWeight(date = System.currentTimeMillis(), weight = weight))
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
         }
     }
 
     fun deleteWeight(bodyWeight: BodyWeight) {
         viewModelScope.launch {
-            repository.deleteBodyWeight(bodyWeight)
+            try {
+                repository.deleteBodyWeight(bodyWeight)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+            }
         }
     }
 }

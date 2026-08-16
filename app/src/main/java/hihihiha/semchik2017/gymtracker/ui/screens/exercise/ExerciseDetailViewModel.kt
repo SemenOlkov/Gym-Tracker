@@ -18,43 +18,46 @@ class ExerciseDetailViewModel @Inject constructor(
     private val getExerciseStatsUseCase: GetExerciseStatsUseCase
 ) : ViewModel() {
 
-    private val _exercise = MutableStateFlow<Exercise?>(null)
-    val exercise: StateFlow<Exercise?> = _exercise.asStateFlow()
-
-    private val _recommendation = MutableStateFlow<RecommendationResult>(RecommendationResult.NoData)
-    val recommendation: StateFlow<RecommendationResult> = _recommendation.asStateFlow()
-
-    private val _stats = MutableStateFlow<List<ExerciseStatPoint>>(emptyList())
-    val stats: StateFlow<List<ExerciseStatPoint>> = _stats.asStateFlow()
-
-    private val _prs = MutableStateFlow<Map<SetSide, PRResult>>(emptyMap())
-    val prs: StateFlow<Map<SetSide, PRResult>> = _prs.asStateFlow()
-
-    private val _lastWorkoutDate = MutableStateFlow<Long?>(null)
-    val lastWorkoutDate: StateFlow<Long?> = _lastWorkoutDate.asStateFlow()
+    private val _uiState = MutableStateFlow(ExerciseDetailUiState(isLoading = true))
+    val uiState: StateFlow<ExerciseDetailUiState> = _uiState.asStateFlow()
 
     fun loadExerciseDetail(exerciseId: Long) {
         viewModelScope.launch {
-            val ex = repository.getAllExercises().firstOrNull()?.find { it.id == exerciseId }
-            _exercise.value = ex
-            
-            if (ex != null) {
-                _recommendation.value = getWeightRecommendationUseCase(ex.id, ex, System.currentTimeMillis())
-                _stats.value = getExerciseStatsUseCase(ex.id)
+            try {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                val ex = repository.getAllExercises().firstOrNull()?.find { it.id == exerciseId }
                 
-                val prMap = mutableMapOf<SetSide, PRResult>()
-                if (ex.laterality == Laterality.BILATERAL) {
-                    repository.getPersonalRecord(ex.id, SetSide.BOTH)?.let { prMap[SetSide.BOTH] = it }
+                if (ex != null) {
+                    val recommendation = getWeightRecommendationUseCase(ex.id, ex, System.currentTimeMillis())
+                    val stats = getExerciseStatsUseCase(ex.id)
+                    
+                    val prMap = mutableMapOf<SetSide, PRResult>()
+                    if (ex.laterality == Laterality.BILATERAL) {
+                        repository.getPersonalRecord(ex.id, SetSide.BOTH)?.let { prMap[SetSide.BOTH] = it }
+                    } else {
+                        repository.getPersonalRecord(ex.id, SetSide.LEFT)?.let { prMap[SetSide.LEFT] = it }
+                        repository.getPersonalRecord(ex.id, SetSide.RIGHT)?.let { prMap[SetSide.RIGHT] = it }
+                    }
+                    
+                    val lastWorkout = repository.getLastWorkoutExerciseWithSets(ex.id, System.currentTimeMillis())
+                    val lastDate = lastWorkout?.let {
+                        repository.getWorkoutWithExercises(it.workoutExercise.workoutId).workout.date
+                    }
+
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        exercise = ex,
+                        recommendation = recommendation,
+                        stats = stats,
+                        prs = prMap,
+                        lastWorkoutDate = lastDate,
+                        errorMessage = null
+                    )
                 } else {
-                    repository.getPersonalRecord(ex.id, SetSide.LEFT)?.let { prMap[SetSide.LEFT] = it }
-                    repository.getPersonalRecord(ex.id, SetSide.RIGHT)?.let { prMap[SetSide.RIGHT] = it }
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Упражнение не найдено")
                 }
-                _prs.value = prMap
-                
-                val lastWorkout = repository.getLastWorkoutExerciseWithSets(ex.id, System.currentTimeMillis())
-                _lastWorkoutDate.value = lastWorkout?.let {
-                    repository.getWorkoutWithExercises(it.workoutExercise.workoutId).workout.date
-                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = e.message)
             }
         }
     }

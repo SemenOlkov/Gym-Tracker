@@ -1,0 +1,148 @@
+package hihihiha.semchik2017.gymtracker.ui.screens.exercise
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import hihihiha.semchik2017.gymtracker.data.model.Exercise
+import hihihiha.semchik2017.gymtracker.data.model.Laterality
+
+@Composable
+fun ExerciseListScreen(
+    onExerciseClick: (Long) -> Unit,
+    viewModel: ExerciseViewModel = hiltViewModel()
+) {
+    val allExercises by viewModel.allExercises.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { showAddDialog = true }) {
+                Icon(Icons.Default.Add, contentDescription = "Создать упражнение")
+            }
+        }
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
+            items(allExercises) { exercise ->
+                ExerciseItem(
+                    exercise = exercise,
+                    onClick = { onExerciseClick(exercise.id) },
+                    onDelete = if (exercise.isCustom) { { viewModel.deleteExercise(exercise) } } else null
+                )
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        CreateExerciseDialog(
+            onDismiss = { showAddDialog = false },
+            onConfirm = { name, isWeighted, laterality, muscleGroups, instructions ->
+                viewModel.createExercise(name, isWeighted, laterality, muscleGroups, instructions)
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun ExerciseItem(exercise: Exercise, onClick: () -> Unit, onDelete: (() -> Unit)?) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onClick() }
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = exercise.name, style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    text = "${if (exercise.isWeighted) "С весом" else "Без веса"}, ${if (exercise.laterality == Laterality.BILATERAL) "Билатеральное" else "Монолатеральное"}",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            if (onDelete != null) {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Laterality, String, String) -> Unit) {
+    var name by remember { mutableStateOf("") }
+    var isWeighted by remember { mutableStateOf(true) }
+    var laterality by remember { mutableStateOf(Laterality.BILATERAL) }
+    var muscleGroups by remember { mutableStateOf("") }
+    var instructions by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Новое упражнение") },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Название") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = muscleGroups,
+                    onValueChange = { muscleGroups = it },
+                    label = { Text("Группы мышц") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = instructions,
+                    onValueChange = { instructions = it },
+                    label = { Text("Инструкция") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = isWeighted, onCheckedChange = { isWeighted = it })
+                    Text("Есть вес")
+                }
+                Text("Тип:", style = MaterialTheme.typography.labelMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = laterality == Laterality.BILATERAL,
+                        onClick = { laterality = Laterality.BILATERAL }
+                    )
+                    Text("Билатеральное")
+                    RadioButton(
+                        selected = laterality == Laterality.UNILATERAL,
+                        onClick = { laterality = Laterality.UNILATERAL }
+                    )
+                    Text("Монолатеральное")
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = { onConfirm(name, isWeighted, laterality, muscleGroups, instructions) }, enabled = name.isNotBlank()) {
+                Text("Создать")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Отмена") }
+        }
+    )
+}

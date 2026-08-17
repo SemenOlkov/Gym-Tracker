@@ -11,6 +11,9 @@ class GetExerciseStatsUseCase @Inject constructor(
     suspend operator fun invoke(exerciseId: Long): List<ExerciseStatPoint> {
         val exercise = repository.getExerciseById(exerciseId)
         val isDecrease = exercise?.progressionType == ProgressionType.DECREASE
+        val projectileCount = exercise?.projectileCount ?: 1
+        val bodyWeight = repository.getLatestBodyWeight() ?: 0.0
+        
         val history = repository.getExerciseSetHistory(exerciseId)
         
         return history.groupBy { it.date }
@@ -21,8 +24,8 @@ class GetExerciseStatsUseCase @Inject constructor(
                     } else {
                         sideSets.mapNotNull { it.weight }.maxOrNull() ?: 0.0
                     }
-                    val totalVolume = sideSets.sumOf { calculateStatsUseCase.calculateVolume(it.weight, it.reps, exercise?.projectileCount ?: 1) }
-                    val max1RM = sideSets.maxOfOrNull { calculateStatsUseCase.calculateOneRepMax(it.weight, it.reps) } ?: 0.0
+                    val totalVolume = sideSets.sumOf { calculateStatsUseCase.calculateVolume(it.weight, it.reps, projectileCount, bodyWeight, isAssisted = isDecrease) }
+                    val max1RM = sideSets.maxOfOrNull { calculateStatsUseCase.calculateOneRepMax(it.weight, it.reps, bodyWeight, isAssisted = isDecrease) } ?: 0.0
                     
                     ExerciseStatPoint(date, bestWeight, side, totalVolume, max1RM)
                 }

@@ -7,5 +7,6 @@ data class WorkoutDetailUiState(
     val isLoading: Boolean = false,
     val workoutWithExercises: WorkoutWithExercises? = null,
     val recommendations: Map<Long, RecommendationResult> = emptyMap(),
+    val bodyWeight: Double = 0.0,
     val errorMessage: String? = null
 )

@@ -152,7 +152,8 @@ fun WorkoutDetailScreen(
                         onUpdateSet = { viewModel.updateSet(it) },
                         onCompleteSet = { viewModel.completeSet(it) },
                         onDeleteSet = { viewModel.deleteSet(it) },
-                        calculateStatsUseCase = viewModel.calculateStatsUseCase
+                        calculateStatsUseCase = viewModel.calculateStatsUseCase,
+                        bodyWeight = uiState.bodyWeight
                     )
                 }
             }
@@ -212,7 +213,8 @@ fun ExerciseCard(
     onUpdateSet: (ExerciseSet) -> Unit,
     onCompleteSet: (ExerciseSet) -> Unit,
     onDeleteSet: (ExerciseSet) -> Unit,
-    calculateStatsUseCase: CalculateStatsUseCase
+    calculateStatsUseCase: CalculateStatsUseCase,
+    bodyWeight: Double
 ) {
     Card(
         modifier = Modifier
@@ -228,7 +230,9 @@ fun ExerciseCard(
                 
                 val totalVolume = calculateStatsUseCase.calculateTotalVolume(
                     exerciseWithSets.sets.filter { it.isCompleted },
-                    exerciseWithSets.exercise.projectileCount
+                    exerciseWithSets.exercise.projectileCount,
+                    bodyWeight = bodyWeight,
+                    isAssisted = exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE
                 )
                 if (totalVolume > 0) {
                     Text(
@@ -274,7 +278,7 @@ fun ExerciseCard(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.exercise_side_left), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.LEFT }.forEach { set ->
-                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.LEFT) }) { Text(stringResource(R.string.set_add_left_btn)) }
@@ -284,7 +288,7 @@ fun ExerciseCard(
                     
                     Text(stringResource(R.string.exercise_side_right), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.RIGHT }.forEach { set ->
-                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.RIGHT) }) { Text(stringResource(R.string.set_add_right_btn)) }
@@ -292,7 +296,7 @@ fun ExerciseCard(
                 }
             } else {
                 exerciseWithSets.sets.forEach { set ->
-                    SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                    SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                 }
                 if (!readOnly) {
                     Button(onClick = { onAddSet(SetSide.BOTH) }, modifier = Modifier.padding(top = 8.dp)) { 
@@ -312,7 +316,9 @@ fun SetRow(
     onUpdateSet: (ExerciseSet) -> Unit,
     onCompleteSet: (ExerciseSet) -> Unit,
     onDeleteSet: (ExerciseSet) -> Unit,
-    calculateStatsUseCase: CalculateStatsUseCase
+    calculateStatsUseCase: CalculateStatsUseCase,
+    bodyWeight: Double,
+    isAssisted: Boolean
 ) {
     // Formatting helper to avoid .0 when not needed
     fun formatDouble(d: Double?): String = when {
@@ -390,7 +396,7 @@ fun SetRow(
                     modifier = Modifier.padding(horizontal = 8.dp).size(24.dp)
                 )
                 if (isWeighted) {
-                    val onerepmax = calculateStatsUseCase.calculateOneRepMax(set.weight, set.reps)
+                    val onerepmax = calculateStatsUseCase.calculateOneRepMax(set.weight, set.reps, bodyWeight, isAssisted)
                     if (onerepmax > 0) {
                         Text(
                             "1RM: ${String.format(Locale.getDefault(), "%.1f", onerepmax)}",

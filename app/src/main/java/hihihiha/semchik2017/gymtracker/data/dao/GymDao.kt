@@ -63,6 +63,9 @@ interface GymDao {
     @Delete
     suspend fun deleteBodyWeight(bodyWeight: BodyWeight)
 
+    @Query("SELECT weight FROM body_weights ORDER BY date DESC LIMIT 1")
+    suspend fun getLatestBodyWeight(): Double?
+
     // Analytics and Recommendations
     @Query("""
         SELECT w.date, s.weight, s.reps, s.side FROM exercise_sets s

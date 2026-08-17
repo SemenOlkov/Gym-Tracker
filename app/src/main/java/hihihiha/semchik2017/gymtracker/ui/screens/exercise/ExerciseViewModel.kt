@@ -33,13 +33,13 @@ class ExerciseViewModel @Inject constructor(
         }
     }
 
-    fun createExercise(name: String, isWeighted: Boolean, laterality: Laterality, projectileCount: Int, muscleGroups: String, instructions: String) {
+    fun createExercise(name: String, isWeighted: Boolean, laterality: Laterality, projectileCount: Int, progressionType: ProgressionType, muscleGroups: String, instructions: String) {
         viewModelScope.launch {
             try {
                 val exercise = Exercise(
                     name = name,
                     isWeighted = isWeighted,
-                    progressionType = ProgressionType.INCREASE,
+                    progressionType = progressionType,
                     laterality = laterality,
                     isCustom = true,
                     projectileCount = projectileCount,

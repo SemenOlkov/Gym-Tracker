@@ -82,6 +82,8 @@ class GymRepositoryImpl @Inject constructor(
         try { gymDao.deleteBodyWeight(bodyWeight) } catch (e: Exception) {}
     }
 
+    override suspend fun getLatestBodyWeight(): Double? = gymDao.getLatestBodyWeight()
+
     override suspend fun getExerciseSetHistory(exerciseId: Long) = gymDao.getExerciseSetHistory(exerciseId)
     
     override suspend fun getLastWorkoutExerciseWithSets(exerciseId: Long, beforeDate: Long) = 

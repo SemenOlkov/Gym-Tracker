@@ -17,8 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.res.stringResource
 import hihihiha.semchik2017.gymtracker.R
-import hihihiha.semchik2017.gymtracker.data.model.Exercise
-import hihihiha.semchik2017.gymtracker.data.model.Laterality
+import hihihiha.semchik2017.gymtracker.data.model.*
 
 @Composable
 fun ExerciseListScreen(
@@ -59,8 +58,8 @@ fun ExerciseListScreen(
     if (showAddDialog) {
         CreateExerciseDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, isWeighted, laterality, projectileCount, muscleGroups, instructions ->
-                viewModel.createExercise(name, isWeighted, laterality, projectileCount, muscleGroups, instructions)
+            onConfirm = { name, isWeighted, laterality, projectileCount, progressionType, muscleGroups, instructions ->
+                viewModel.createExercise(name, isWeighted, laterality, projectileCount, progressionType, muscleGroups, instructions)
                 showAddDialog = false
             }
         )
@@ -96,10 +95,11 @@ fun ExerciseItem(exercise: Exercise, onClick: () -> Unit, onDelete: (() -> Unit)
 }
 
 @Composable
-fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Laterality, Int, String, String) -> Unit) {
+fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Laterality, Int, ProgressionType, String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var isWeighted by remember { mutableStateOf(true) }
     var laterality by remember { mutableStateOf(Laterality.BILATERAL) }
+    var progressionType by remember { mutableStateOf(ProgressionType.INCREASE) }
     var projectileCount by remember { mutableStateOf(1) }
     var muscleGroups by remember { mutableStateOf("") }
     var instructions by remember { mutableStateOf("") }
@@ -179,10 +179,24 @@ fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Lat
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Влияние веса:", style = MaterialTheme.typography.labelMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = progressionType == ProgressionType.INCREASE,
+                        onClick = { progressionType = ProgressionType.INCREASE }
+                    )
+                    Text("С весом сложнее")
+                    RadioButton(
+                        selected = progressionType == ProgressionType.DECREASE,
+                        onClick = { progressionType = ProgressionType.DECREASE }
+                    )
+                    Text("С весом легче (помощь)")
+                }
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(name, isWeighted, laterality, projectileCount, muscleGroups, instructions) }, enabled = name.isNotBlank()) {
+            Button(onClick = { onConfirm(name, isWeighted, laterality, projectileCount, progressionType, muscleGroups, instructions) }, enabled = name.isNotBlank()) {
                 Text("Создать")
             }
         },

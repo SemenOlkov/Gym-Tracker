@@ -27,6 +27,7 @@ interface GymRepository {
     fun getAllBodyWeights(): Flow<List<BodyWeight>>
     suspend fun insertBodyWeight(bodyWeight: BodyWeight): Long
     suspend fun deleteBodyWeight(bodyWeight: BodyWeight)
+    suspend fun getLatestBodyWeight(): Double?
 
     suspend fun getExerciseSetHistory(exerciseId: Long): List<ExerciseSetWithDate>
     suspend fun getLastWorkoutExerciseWithSets(exerciseId: Long, beforeDate: Long): WorkoutExerciseWithSets?

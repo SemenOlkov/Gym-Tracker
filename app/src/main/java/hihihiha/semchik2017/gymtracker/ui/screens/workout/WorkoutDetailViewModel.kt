@@ -65,11 +65,14 @@ class WorkoutDetailViewModel @Inject constructor(
                 }.awaitAll().forEach { (id, rec) ->
                     newRecs[id] = rec
                 }
+                
+                val bodyWeight = repository.getLatestBodyWeight() ?: 0.0
 
                 _uiState.value = _uiState.value.copy(
                     isLoading = false, 
                     workoutWithExercises = data,
                     recommendations = newRecs,
+                    bodyWeight = bodyWeight,
                     errorMessage = null
                 )
             } catch (e: Exception) {

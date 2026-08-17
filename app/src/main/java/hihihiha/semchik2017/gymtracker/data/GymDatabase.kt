@@ -6,6 +6,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.dao.GymDao
+import hihihiha.semchik2017.gymtracker.data.dao.NutritionDao
 import hihihiha.semchik2017.gymtracker.data.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,13 +14,17 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @Database(
-    entities = [Exercise::class, Workout::class, WorkoutExercise::class, ExerciseSet::class, BodyWeight::class],
-    version = 5,
+    entities = [
+        Exercise::class, Workout::class, WorkoutExercise::class, ExerciseSet::class, BodyWeight::class,
+        Product::class, NutritionDay::class, NutritionEntry::class
+    ],
+    version = 6,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class GymDatabase : RoomDatabase() {
     abstract fun gymDao(): GymDao
+    abstract fun nutritionDao(): NutritionDao
 
     companion object {
         @Volatile
@@ -33,7 +38,7 @@ abstract class GymDatabase : RoomDatabase() {
                     "gym_database"
                 )
                 .addCallback(GymDatabaseCallback(context.applicationContext, scope))
-                .addMigrations(MIGRATION_4_5)
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
                 .build()
                 INSTANCE = instance
                 instance
@@ -43,6 +48,39 @@ abstract class GymDatabase : RoomDatabase() {
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE exercises ADD COLUMN projectileCount INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `products` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `name` TEXT NOT NULL, 
+                        `calories` REAL NOT NULL, 
+                        `proteins` REAL NOT NULL, 
+                        `fats` REAL NOT NULL, 
+                        `carbs` REAL NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `nutrition_days` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `date` INTEGER NOT NULL, 
+                        `isClosed` INTEGER NOT NULL
+                    )
+                """)
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `nutrition_entries` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `dayId` INTEGER NOT NULL, 
+                        `productId` INTEGER NOT NULL, 
+                        `weight` REAL NOT NULL, 
+                        `timestamp` INTEGER NOT NULL,
+                        FOREIGN KEY(`dayId`) REFERENCES `nutrition_days`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`productId`) REFERENCES `products`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """)
             }
         }
     }

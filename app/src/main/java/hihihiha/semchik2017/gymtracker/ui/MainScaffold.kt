@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +27,7 @@ fun MainScaffold() {
     val navItems = listOf(
         BottomNavItem(Screen.Workouts, R.string.nav_workouts, Icons.Default.FitnessCenter),
         BottomNavItem(Screen.Exercises, R.string.nav_exercises, Icons.AutoMirrored.Filled.List),
+        BottomNavItem(Screen.Nutrition, R.string.nav_nutrition, Icons.Default.Restaurant),
         BottomNavItem(Screen.Weight, R.string.nav_weight, Icons.Default.Person)
     )
 

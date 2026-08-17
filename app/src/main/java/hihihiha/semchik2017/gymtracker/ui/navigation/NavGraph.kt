@@ -10,6 +10,8 @@ import hihihiha.semchik2017.gymtracker.ui.screens.workout.WorkoutDetailScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.exercise.ExerciseListScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.exercise.ExerciseDetailScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.weight.WeightScreen
+import hihihiha.semchik2017.gymtracker.ui.screens.nutrition.NutritionListScreen
+import hihihiha.semchik2017.gymtracker.ui.screens.nutrition.NutritionDetailScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -47,6 +49,20 @@ fun NavGraph(navController: NavHostController) {
         }
         composable<Screen.Weight> {
             WeightScreen()
+        }
+        composable<Screen.Nutrition> {
+            NutritionListScreen(
+                onDayClick = { dayId: Long ->
+                    navController.navigate(Screen.NutritionDetail(dayId))
+                }
+            )
+        }
+        composable<Screen.NutritionDetail> { backStackEntry ->
+            val args = backStackEntry.toRoute<Screen.NutritionDetail>()
+            NutritionDetailScreen(
+                dayId = args.dayId,
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 }

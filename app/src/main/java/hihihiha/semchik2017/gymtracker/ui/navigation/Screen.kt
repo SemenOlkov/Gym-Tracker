@@ -11,6 +11,7 @@ import kotlinx.serialization.Serializable
 sealed interface Screen {
     @Serializable object Workouts : Screen
     @Serializable object Exercises : Screen
+    @Serializable object Nutrition : Screen
     @Serializable object Weight : Screen
     
     @Serializable 
@@ -18,6 +19,9 @@ sealed interface Screen {
 
     @Serializable 
     data class WorkoutDetail(val workoutId: Long) : Screen
+
+    @Serializable
+    data class NutritionDetail(val dayId: Long) : Screen
 }
 
 data class BottomNavItem(

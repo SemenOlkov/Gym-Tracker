@@ -12,11 +12,11 @@ class CalculateStatsUseCase @Inject constructor() {
         return weight * (1 + reps / 30.0)
     }
 
-    fun calculateVolume(weight: Double?, reps: Int): Double {
-        return (weight ?: 0.0) * reps
+    fun calculateVolume(weight: Double?, reps: Int, projectileCount: Int = 1): Double {
+        return (weight ?: 0.0) * reps * projectileCount
     }
 
-    fun calculateTotalVolume(sets: List<ExerciseSet>): Double {
-        return sets.sumOf { calculateVolume(it.weight, it.reps) }
+    fun calculateTotalVolume(sets: List<ExerciseSet>, projectileCount: Int = 1): Double {
+        return sets.sumOf { calculateVolume(it.weight, it.reps, projectileCount) }
     }
 }

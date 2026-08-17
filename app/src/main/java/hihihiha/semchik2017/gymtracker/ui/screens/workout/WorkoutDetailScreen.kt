@@ -226,7 +226,10 @@ fun ExerciseCard(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = exerciseWithSets.exercise.name, style = MaterialTheme.typography.titleLarge)
                 
-                val totalVolume = calculateStatsUseCase.calculateTotalVolume(exerciseWithSets.sets.filter { it.isCompleted })
+                val totalVolume = calculateStatsUseCase.calculateTotalVolume(
+                    exerciseWithSets.sets.filter { it.isCompleted },
+                    exerciseWithSets.exercise.projectileCount
+                )
                 if (totalVolume > 0) {
                     Text(
                         stringResource(R.string.workout_volume_label, totalVolume.toInt()),
@@ -271,7 +274,7 @@ fun ExerciseCard(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.exercise_side_left), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.LEFT }.forEach { set ->
-                        SetRow(set, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.LEFT) }) { Text(stringResource(R.string.set_add_left_btn)) }
@@ -281,7 +284,7 @@ fun ExerciseCard(
                     
                     Text(stringResource(R.string.exercise_side_right), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.RIGHT }.forEach { set ->
-                        SetRow(set, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.RIGHT) }) { Text(stringResource(R.string.set_add_right_btn)) }
@@ -289,7 +292,7 @@ fun ExerciseCard(
                 }
             } else {
                 exerciseWithSets.sets.forEach { set ->
-                    SetRow(set, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
+                    SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase)
                 }
                 if (!readOnly) {
                     Button(onClick = { onAddSet(SetSide.BOTH) }, modifier = Modifier.padding(top = 8.dp)) { 
@@ -304,6 +307,7 @@ fun ExerciseCard(
 @Composable
 fun SetRow(
     set: ExerciseSet,
+    isWeighted: Boolean,
     readOnly: Boolean,
     onUpdateSet: (ExerciseSet) -> Unit,
     onCompleteSet: (ExerciseSet) -> Unit,
@@ -331,22 +335,25 @@ fun SetRow(
         ) {
             Text("${set.setNumber}.", modifier = Modifier.width(28.dp), style = MaterialTheme.typography.bodyMedium)
             
-            OutlinedTextField(
-                value = weightText,
-                onValueChange = { 
-                    weightText = it
-                    val newWeight = it.replace(',', '.').toDoubleOrNull()
-                    if (newWeight != null || it.isEmpty()) {
-                        onUpdateSet(set.copy(weight = newWeight))
-                    }
-                },
-                enabled = !isSetReadOnly,
-                modifier = Modifier.width(90.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                label = { Text(stringResource(R.string.set_label_kg)) },
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.width(8.dp))
+            if (isWeighted) {
+                OutlinedTextField(
+                    value = weightText,
+                    onValueChange = { 
+                        weightText = it
+                        val newWeight = it.replace(',', '.').toDoubleOrNull()
+                        if (newWeight != null || it.isEmpty()) {
+                            onUpdateSet(set.copy(weight = newWeight))
+                        }
+                    },
+                    enabled = !isSetReadOnly,
+                    modifier = Modifier.width(90.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    label = { Text(stringResource(R.string.set_label_kg)) },
+                    singleLine = true
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
             OutlinedTextField(
                 value = repsText,
                 onValueChange = { 
@@ -382,13 +389,15 @@ fun SetRow(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 8.dp).size(24.dp)
                 )
-                val onerepmax = calculateStatsUseCase.calculateOneRepMax(set.weight, set.reps)
-                if (onerepmax > 0) {
-                    Text(
-                        "1RM: ${String.format(Locale.getDefault(), "%.1f", onerepmax)}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.tertiary
-                    )
+                if (isWeighted) {
+                    val onerepmax = calculateStatsUseCase.calculateOneRepMax(set.weight, set.reps)
+                    if (onerepmax > 0) {
+                        Text(
+                            "1RM: ${String.format(Locale.getDefault(), "%.1f", onerepmax)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary
+                        )
+                    }
                 }
             }
         }

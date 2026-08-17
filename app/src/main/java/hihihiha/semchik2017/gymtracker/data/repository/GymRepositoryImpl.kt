@@ -14,6 +14,8 @@ class GymRepositoryImpl @Inject constructor(
 
     override fun getAllExercises(): Flow<List<Exercise>> = gymDao.getAllExercises()
     
+    override suspend fun getExerciseById(id: Long) = gymDao.getExerciseById(id)
+    
     override suspend fun insertExercise(exercise: Exercise) = try {
         gymDao.insertExercise(exercise)
     } catch (e: Exception) {

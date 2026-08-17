@@ -2,6 +2,7 @@ package hihihiha.semchik2017.gymtracker.data
 
 import android.content.Context
 import androidx.room.*
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.dao.GymDao
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [Exercise::class, Workout::class, WorkoutExercise::class, ExerciseSet::class, BodyWeight::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -32,9 +33,16 @@ abstract class GymDatabase : RoomDatabase() {
                     "gym_database"
                 )
                 .addCallback(GymDatabaseCallback(context.applicationContext, scope))
+                .addMigrations(MIGRATION_4_5)
                 .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE exercises ADD COLUMN projectileCount INTEGER NOT NULL DEFAULT 1")
             }
         }
     }
@@ -63,6 +71,7 @@ abstract class GymDatabase : RoomDatabase() {
                     progressionType = ProgressionType.INCREASE,
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
+                    projectileCount = 1,
                     muscleGroups = context.getString(R.string.ex_bench_press_muscles),
                     instructions = context.getString(R.string.ex_bench_press_instr)
                 ),
@@ -72,6 +81,7 @@ abstract class GymDatabase : RoomDatabase() {
                     progressionType = ProgressionType.INCREASE,
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
+                    projectileCount = 2,
                     muscleGroups = context.getString(R.string.ex_dumbell_fly_muscles),
                     instructions = context.getString(R.string.ex_dumbell_fly_instr)
                 ),
@@ -153,6 +163,7 @@ abstract class GymDatabase : RoomDatabase() {
                     progressionType = ProgressionType.INCREASE,
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
+                    projectileCount = 0,
                     muscleGroups = context.getString(R.string.ex_upper_abs_muscles),
                     instructions = context.getString(R.string.ex_upper_abs_instr)
                 ),
@@ -162,6 +173,7 @@ abstract class GymDatabase : RoomDatabase() {
                     progressionType = ProgressionType.INCREASE,
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
+                    projectileCount = 0,
                     muscleGroups = context.getString(R.string.ex_lower_abs_muscles),
                     instructions = context.getString(R.string.ex_lower_abs_instr)
                 ),

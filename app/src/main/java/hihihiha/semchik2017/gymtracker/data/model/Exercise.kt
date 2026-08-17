@@ -11,6 +11,7 @@ data class Exercise(
     val progressionType: ProgressionType,
     val laterality: Laterality,
     val isCustom: Boolean,
+    val projectileCount: Int = 1,
     val defaultWeightStep: Double = 2.5,
     val muscleGroups: String = "",
     val instructions: String = ""

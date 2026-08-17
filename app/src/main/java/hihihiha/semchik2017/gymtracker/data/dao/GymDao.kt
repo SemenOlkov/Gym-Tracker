@@ -82,12 +82,19 @@ interface GymDao {
     """)
     suspend fun getLastWorkoutExerciseWithSets(exerciseId: Long, beforeDate: Long): WorkoutExerciseWithSets?
 
+    @Query("SELECT * FROM exercises WHERE id = :id")
+    suspend fun getExerciseById(id: Long): Exercise?
+
     @Query("""
         SELECT s.weight as maxWeight, w.date FROM exercise_sets s
         INNER JOIN workout_exercises we ON s.workoutExerciseId = we.id
         INNER JOIN workouts w ON we.workoutId = w.id
+        INNER JOIN exercises e ON we.exerciseId = e.id
         WHERE we.exerciseId = :exerciseId AND s.weight IS NOT NULL AND s.side = :side AND w.isCompleted = 1
-        ORDER BY s.weight DESC, w.date DESC LIMIT 1
+        ORDER BY 
+            CASE WHEN e.progressionType = 'INCREASE' THEN s.weight END DESC,
+            CASE WHEN e.progressionType = 'DECREASE' THEN s.weight END ASC,
+            w.date DESC LIMIT 1
     """)
     suspend fun getPersonalRecord(exerciseId: Long, side: SetSide = SetSide.BOTH): PRResult?
 }

@@ -59,8 +59,8 @@ fun ExerciseListScreen(
     if (showAddDialog) {
         CreateExerciseDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, isWeighted, laterality, muscleGroups, instructions ->
-                viewModel.createExercise(name, isWeighted, laterality, muscleGroups, instructions)
+            onConfirm = { name, isWeighted, laterality, projectileCount, muscleGroups, instructions ->
+                viewModel.createExercise(name, isWeighted, laterality, projectileCount, muscleGroups, instructions)
                 showAddDialog = false
             }
         )
@@ -96,12 +96,27 @@ fun ExerciseItem(exercise: Exercise, onClick: () -> Unit, onDelete: (() -> Unit)
 }
 
 @Composable
-fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Laterality, String, String) -> Unit) {
+fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Laterality, Int, String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var isWeighted by remember { mutableStateOf(true) }
     var laterality by remember { mutableStateOf(Laterality.BILATERAL) }
+    var projectileCount by remember { mutableStateOf(1) }
     var muscleGroups by remember { mutableStateOf("") }
     var instructions by remember { mutableStateOf("") }
+
+    // Enforce projectile rules based on weight and laterality
+    LaunchedEffect(isWeighted, laterality) {
+        if (!isWeighted) {
+            projectileCount = 0
+        } else {
+            if (laterality == Laterality.UNILATERAL) {
+                projectileCount = 1
+            } else if (projectileCount == 0) {
+                // If it was unweighted (0) and we turn weight on, default to 1
+                projectileCount = 1
+            }
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -146,10 +161,28 @@ fun CreateExerciseDialog(onDismiss: () -> Unit, onConfirm: (String, Boolean, Lat
                     )
                     Text("Монолатеральное")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Количество снарядов:", style = MaterialTheme.typography.labelMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    (0..2).forEach { count ->
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
+                            RadioButton(
+                                selected = projectileCount == count,
+                                onClick = { projectileCount = count },
+                                enabled = when {
+                                    !isWeighted -> count == 0
+                                    laterality == Laterality.UNILATERAL -> count == 1
+                                    else -> count > 0 // Weighted + Bilateral
+                                }
+                            )
+                            Text(text = count.toString())
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(name, isWeighted, laterality, muscleGroups, instructions) }, enabled = name.isNotBlank()) {
+            Button(onClick = { onConfirm(name, isWeighted, laterality, projectileCount, muscleGroups, instructions) }, enabled = name.isNotBlank()) {
                 Text("Создать")
             }
         },

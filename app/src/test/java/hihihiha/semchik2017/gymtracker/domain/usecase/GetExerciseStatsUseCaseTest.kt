@@ -25,9 +25,9 @@ class GetExerciseStatsUseCaseTest {
         val exerciseId = 1L
         val exercise = Exercise(id = exerciseId, name = "Bench Press", isWeighted = true, progressionType = ProgressionType.INCREASE, laterality = Laterality.BILATERAL, isCustom = false)
         val history = listOf(
-            ExerciseSetWithDate(date = 1000L, weight = 80.0, reps = 10, side = SetSide.BOTH),
-            ExerciseSetWithDate(date = 1000L, weight = 100.0, reps = 5, side = SetSide.BOTH),
-            ExerciseSetWithDate(date = 1000L, weight = 90.0, reps = 8, side = SetSide.BOTH)
+            ExerciseSetWithDate(date = 1000L, weightKg = 80.0, weightLb = 80.0 * 2.20462, reps = 10, side = SetSide.BOTH),
+            ExerciseSetWithDate(date = 1000L, weightKg = 100.0, weightLb = 100.0 * 2.20462, reps = 5, side = SetSide.BOTH),
+            ExerciseSetWithDate(date = 1000L, weightKg = 90.0, weightLb = 90.0 * 2.20462, reps = 8, side = SetSide.BOTH)
         )
 
         `when`(repository.getExerciseById(exerciseId)).thenReturn(exercise)
@@ -36,7 +36,7 @@ class GetExerciseStatsUseCaseTest {
         val result = useCase(exerciseId)
 
         assertEquals(1, result.size)
-        assertEquals(100.0, result[0].maxWeight, 0.0)
+        assertEquals(100.0, result[0].maxWeightKg, 0.0)
     }
 
     @Test
@@ -44,9 +44,9 @@ class GetExerciseStatsUseCaseTest {
         val exerciseId = 2L
         val exercise = Exercise(id = exerciseId, name = "Gravitron", isWeighted = true, progressionType = ProgressionType.DECREASE, laterality = Laterality.BILATERAL, isCustom = false)
         val history = listOf(
-            ExerciseSetWithDate(date = 1000L, weight = 50.0, reps = 10, side = SetSide.BOTH),
-            ExerciseSetWithDate(date = 1000L, weight = 30.0, reps = 5, side = SetSide.BOTH),
-            ExerciseSetWithDate(date = 1000L, weight = 40.0, reps = 8, side = SetSide.BOTH)
+            ExerciseSetWithDate(date = 1000L, weightKg = 50.0, weightLb = 50.0 * 2.20462, reps = 10, side = SetSide.BOTH),
+            ExerciseSetWithDate(date = 1000L, weightKg = 30.0, weightLb = 30.0 * 2.20462, reps = 5, side = SetSide.BOTH),
+            ExerciseSetWithDate(date = 1000L, weightKg = 40.0, weightLb = 40.0 * 2.20462, reps = 8, side = SetSide.BOTH)
         )
 
         `when`(repository.getExerciseById(exerciseId)).thenReturn(exercise)
@@ -55,7 +55,7 @@ class GetExerciseStatsUseCaseTest {
         val result = useCase(exerciseId)
 
         assertEquals(1, result.size)
-        assertEquals(30.0, result[0].maxWeight, 0.0) // 30.0 is the best (minimum) weight
+        assertEquals(30.0, result[0].maxWeightKg, 0.0) // 30.0 is the best (minimum) weight
     }
 
     @Test
@@ -71,7 +71,7 @@ class GetExerciseStatsUseCaseTest {
             projectileCount = 2
         )
         val history = listOf(
-            ExerciseSetWithDate(date = 1000L, weight = 10.0, reps = 10, side = SetSide.BOTH)
+            ExerciseSetWithDate(date = 1000L, weightKg = 10.0, weightLb = 10.0 * 2.20462, reps = 10, side = SetSide.BOTH)
         )
 
         `when`(repository.getExerciseById(exerciseId)).thenReturn(exercise)
@@ -81,7 +81,7 @@ class GetExerciseStatsUseCaseTest {
 
         assertEquals(1, result.size)
         // 10.0 weight * 10 reps * 2 projectiles = 200.0
-        assertEquals(200.0, result[0].totalVolume, 0.0)
+        assertEquals(200.0, result[0].totalVolumeKg, 0.0)
     }
 
     @Test
@@ -97,7 +97,7 @@ class GetExerciseStatsUseCaseTest {
             projectileCount = 0
         )
         val history = listOf(
-            ExerciseSetWithDate(date = 1000L, weight = null, reps = 20, side = SetSide.BOTH)
+            ExerciseSetWithDate(date = 1000L, weightKg = null, weightLb = null, reps = 20, side = SetSide.BOTH)
         )
 
         `when`(repository.getExerciseById(exerciseId)).thenReturn(exercise)
@@ -107,7 +107,7 @@ class GetExerciseStatsUseCaseTest {
 
         assertEquals(1, result.size)
         // projectileCount = 0 means volume is 0
-        assertEquals(0.0, result[0].totalVolume, 0.0)
+        assertEquals(0.0, result[0].totalVolumeKg, 0.0)
     }
 
     @Test
@@ -124,7 +124,7 @@ class GetExerciseStatsUseCaseTest {
             projectileCount = 1
         )
         val history = listOf(
-            ExerciseSetWithDate(date = 1000L, weight = 30.0, reps = 10, side = SetSide.BOTH)
+            ExerciseSetWithDate(date = 1000L, weightKg = 30.0, weightLb = 30.0 * 2.20462, reps = 10, side = SetSide.BOTH)
         )
 
         `when`(repository.getExerciseById(exerciseId)).thenReturn(exercise)
@@ -136,9 +136,9 @@ class GetExerciseStatsUseCaseTest {
         assertEquals(1, result.size)
         // Effective Weight = 80.0 (body) - 30.0 (assistance) = 50.0
         // Volume = 50.0 * 10 reps * 1 projectile = 500.0
-        assertEquals(500.0, result[0].totalVolume, 0.0)
+        assertEquals(500.0, result[0].totalVolumeKg, 0.0)
         
         // 1RM check: 50.0 * (1 + 10/30.0) = 50.0 * 1.3333 = 66.666
-        assertEquals(66.666, result[0].max1RM, 0.001)
+        assertEquals(66.666, result[0].max1RMKg, 0.001)
     }
 }

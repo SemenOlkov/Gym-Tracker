@@ -54,13 +54,13 @@ fun ExerciseDetailScreen(
             val rightStats = uiState.stats.filter { it.side == SetSide.RIGHT }
 
             if (bilateralStats.isNotEmpty()) {
-                modelBoth.runTransaction { lineSeries { series(bilateralStats.map { it.maxWeight }) } }
+                modelBoth.runTransaction { lineSeries { series(bilateralStats.map { if (uiState.unit == "lb") it.maxWeightLb else it.maxWeightKg }) } }
             }
             if (leftStats.isNotEmpty()) {
-                modelLeft.runTransaction { lineSeries { series(leftStats.map { it.maxWeight }) } }
+                modelLeft.runTransaction { lineSeries { series(leftStats.map { if (uiState.unit == "lb") it.maxWeightLb else it.maxWeightKg }) } }
             }
             if (rightStats.isNotEmpty()) {
-                modelRight.runTransaction { lineSeries { series(rightStats.map { it.maxWeight }) } }
+                modelRight.runTransaction { lineSeries { series(rightStats.map { if (uiState.unit == "lb") it.maxWeightLb else it.maxWeightKg }) } }
             }
         }
     }
@@ -123,7 +123,8 @@ fun ExerciseDetailScreen(
                                 SetSide.RIGHT -> stringResource(R.string.exercise_side_right) + ": "
                                 else -> ""
                             }
-                            val weightStr = if (ex.isWeighted) "${result.maxWeight} кг" else ""
+                            val weightVal = if (uiState.unit == "lb") result.weightLb else result.weightKg
+                            val weightStr = if (ex.isWeighted) "${String.format(Locale.getDefault(), "%.2f", weightVal)} ${uiState.unit}" else ""
                             Text(
                                 text = "$sidePrefix$weightStr ($dateStr)", 
                                 style = MaterialTheme.typography.bodyLarge,
@@ -136,18 +137,21 @@ fun ExerciseDetailScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(stringResource(R.string.exercise_rec_weight), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    RecommendationPlate(uiState.recommendation)
+                    RecommendationPlate(uiState.recommendation, uiState.unit)
                     
                     Spacer(modifier = Modifier.height(24.dp))
                     
                     if (ex.laterality == Laterality.BILATERAL) {
-                        ExerciseChartSection(stringResource(R.string.exercise_progress_max_weight), uiState.stats.filter { it.side == SetSide.BOTH }, modelBoth)
+                        ExerciseChartSection(stringResource(R.string.exercise_progress_max_weight), uiState.stats.filter { it.side == SetSide.BOTH }, modelBoth, uiState.unit)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(stringResource(R.string.exercise_history_title), style = MaterialTheme.typography.titleSmall)
                         uiState.stats.filter { it.side == SetSide.BOTH }.reversed().forEach { point ->
                             val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(point.date))
-                            val volumeStr = if (ex.isWeighted) "Объем ${point.totalVolume.toInt()} кг" else ""
-                            val rmStr = if (ex.isWeighted) " | 1RM: ${String.format(Locale.getDefault(), "%.1f", point.max1RM)} кг" else ""
+                            val volumeVal = if (uiState.unit == "lb") point.totalVolumeLb else point.totalVolumeKg
+                            val rmVal = if (uiState.unit == "lb") point.max1RMLb else point.max1RMKg
+                            
+                            val volumeStr = if (ex.isWeighted) "Объем ${String.format(Locale.getDefault(), "%.2f", volumeVal)} ${uiState.unit}" else ""
+                            val rmStr = if (ex.isWeighted) " | 1RM: ${String.format(Locale.getDefault(), "%.2f", rmVal)} ${uiState.unit}" else ""
                             if (volumeStr.isNotEmpty() || rmStr.isNotEmpty()) {
                                 Text(
                                     text = "$dateStr: $volumeStr$rmStr",
@@ -158,17 +162,19 @@ fun ExerciseDetailScreen(
                             }
                         }
                     } else {
-                        ExerciseChartSection(stringResource(R.string.exercise_progress_chart) + " (${stringResource(R.string.exercise_side_left)})", uiState.stats.filter { it.side == SetSide.LEFT }, modelLeft)
+                        ExerciseChartSection(stringResource(R.string.exercise_progress_chart) + " (${stringResource(R.string.exercise_side_left)})", uiState.stats.filter { it.side == SetSide.LEFT }, modelLeft, uiState.unit)
                         if (ex.isWeighted) {
                             uiState.stats.filter { it.side == SetSide.LEFT }.reversed().take(1).forEach { point ->
-                                 Text("Последний 1RM (Л): ${String.format(Locale.getDefault(), "%.1f", point.max1RM)} кг", style = MaterialTheme.typography.bodySmall)
+                                 val rmVal = if (uiState.unit == "lb") point.max1RMLb else point.max1RMKg
+                                 Text("Последний 1RM (Л): ${String.format(Locale.getDefault(), "%.2f", rmVal)} ${uiState.unit}", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                         Spacer(modifier = Modifier.height(24.dp))
-                        ExerciseChartSection(stringResource(R.string.exercise_progress_chart) + " (${stringResource(R.string.exercise_side_right)})", uiState.stats.filter { it.side == SetSide.RIGHT }, modelRight)
+                        ExerciseChartSection(stringResource(R.string.exercise_progress_chart) + " (${stringResource(R.string.exercise_side_right)})", uiState.stats.filter { it.side == SetSide.RIGHT }, modelRight, uiState.unit)
                         if (ex.isWeighted) {
                             uiState.stats.filter { it.side == SetSide.RIGHT }.reversed().take(1).forEach { point ->
-                                 Text("Последний 1RM (П): ${String.format(Locale.getDefault(), "%.1f", point.max1RM)} кг", style = MaterialTheme.typography.bodySmall)
+                                 val rmVal = if (uiState.unit == "lb") point.max1RMLb else point.max1RMKg
+                                 Text("Последний 1RM (П): ${String.format(Locale.getDefault(), "%.2f", rmVal)} ${uiState.unit}", style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -179,19 +185,26 @@ fun ExerciseDetailScreen(
 }
 
 @Composable
-fun ExerciseChartSection(title: String, points: List<ExerciseStatPoint>, modelProducer: CartesianChartModelProducer) {
+fun ExerciseChartSection(title: String, points: List<ExerciseStatPoint>, modelProducer: CartesianChartModelProducer, unit: String) {
     Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     if (points.isNotEmpty()) {
+        val dates = remember(points) { points.map { it.date } }
         CartesianChartHost(
             chart = rememberCartesianChart(
                 rememberLineCartesianLayer(),
                 startAxis = rememberStartAxis(
                     label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
-                    title = stringResource(R.string.set_label_kg),
+                    title = unit,
                     titleComponent = rememberTextComponent(color = MaterialTheme.colorScheme.secondary)
                 ),
                 bottomAxis = rememberBottomAxis(
                     label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
+                    valueFormatter = { x, _, _ ->
+                        val index = x.toInt()
+                        if (index in dates.indices) {
+                            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                        } else ""
+                    }
                 ),
                 marker = rememberDefaultCartesianMarker(
                     label = rememberTextComponent(
@@ -212,12 +225,12 @@ fun ExerciseChartSection(title: String, points: List<ExerciseStatPoint>, modelPr
 }
 
 @Composable
-fun RecommendationPlate(recommendation: RecommendationResult) {
+fun RecommendationPlate(recommendation: RecommendationResult, unit: String) {
     val text = when (recommendation) {
-        is RecommendationResult.Bilateral -> stringResource(R.string.weight_unit, recommendation.weight.toString())
+        is RecommendationResult.Bilateral -> String.format(Locale.getDefault(), "%.2f %s", recommendation.weight, unit)
         is RecommendationResult.Unilateral -> {
-            val left = recommendation.leftWeight?.let { "Л: $it кг" } ?: ""
-            val right = recommendation.rightWeight?.let { "П: $it кг" } ?: ""
+            val left = recommendation.leftWeight?.let { String.format(Locale.getDefault(), "Л: %.2f %s", it, unit) } ?: ""
+            val right = recommendation.rightWeight?.let { String.format(Locale.getDefault(), "П: %.2f %s", it, unit) } ?: ""
             "$left $right".trim()
         }
         RecommendationResult.NoData -> stringResource(R.string.exercise_no_data)

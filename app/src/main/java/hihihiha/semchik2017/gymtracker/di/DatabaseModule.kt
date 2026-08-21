@@ -9,6 +9,7 @@ import dagger.hilt.components.SingletonComponent
 import hihihiha.semchik2017.gymtracker.data.GymDatabase
 import hihihiha.semchik2017.gymtracker.data.dao.GymDao
 import hihihiha.semchik2017.gymtracker.data.dao.NutritionDao
+import hihihiha.semchik2017.gymtracker.data.dao.BackupDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
@@ -30,5 +31,10 @@ object DatabaseModule {
     @Provides
     fun provideNutritionDao(database: GymDatabase): NutritionDao {
         return database.nutritionDao()
+    }
+
+    @Provides
+    fun provideBackupDao(database: GymDatabase): BackupDao {
+        return database.backupDao()
     }
 }

@@ -4,7 +4,11 @@
     <!-- Navigation -->
     <string name="nav_workouts">Тренировки</string>
     <string name="nav_exercises">Упражнения</string>
-    <string name="nav_weight">Вес тела</string>
+    <string name="nav_nutrition">КБЖУ</string>
+    <string name="nav_weight">Вес</string>
+    <string name="nav_app_settings">Настройки приложения</string>
+    <string name="nav_backup">Резервное копирование</string>
+    <string name="nav_about">О приложении</string>
 
     <!-- Workout List -->
     <string name="workout_new">Новая тренировка</string>
@@ -22,7 +26,8 @@
     <string name="workout_rename">Переименовать</string>
     <string name="workout_add_exercise">Добавить упражнение</string>
     <string name="workout_completed_badge">Завершена</string>
-    <string name="workout_volume_label">Объем: %d кг</string>
+    <string name="workout_volume_label_plain">Объем</string>
+    <string name="workout_volume_label">Объем: %d %s</string>
 
     <!-- Exercise Detail -->
     <string name="exercise_muscle_groups">Группы мышц:</string>
@@ -39,27 +44,55 @@
     <string name="exercise_side_right">Право</string>
 
     <!-- Sets -->
-    <string name="set_label_kg">кг</string>
+    <string name="set_label_kg">ед</string>
     <string name="set_label_reps">повт</string>
     <string name="set_add_btn">+ Подход</string>
     <string name="set_add_left_btn">+ Подход (Л)</string>
     <string name="set_add_right_btn">+ Подход (П)</string>
     <string name="set_note_hint">Заметка</string>
-    <string name="set_recommendation">Рекомендуемый вес: %s кг</string>
+    <string name="set_recommendation">Рекомендуемый вес: %s %s</string>
     <string name="set_recommendation_unilateral">Рекомендация: %s</string>
     <string name="set_no_weight">Без веса</string>
 
     <!-- Weight Tracking -->
     <string name="weight_chart_title">График веса</string>
     <string name="weight_add_title">Записать вес тела</string>
-    <string name="weight_hint">Вес (кг)</string>
+    <string name="weight_hint">Вес</string>
     <string name="weight_save">Сохранить</string>
-    <string name="weight_unit">%s кг</string>
+    <string name="weight_unit">%s %s</string>
+
+    <!-- Nutrition -->
+    <string name="nutrition_today">Сегодня</string>
+    <string name="nutrition_calories">ккал</string>
+    <string name="nutrition_proteins">Б: %.1fг</string>
+    <string name="nutrition_fats">Ж: %.1fг</string>
+    <string name="nutrition_carbs">У: %.1fг</string>
+    <string name="nutrition_add_entry">Добавить продукт</string>
+    <string name="nutrition_search_product">Поиск продукта...</string>
+    <string name="nutrition_create_product">Создать новый продукт</string>
+    <string name="nutrition_product_name">Название</string>
+    <string name="nutrition_weight_hint">Вес (г)</string>
+    <string name="nutrition_calories_short">К</string>
+    <string name="nutrition_proteins_short">Б</string>
+    <string name="nutrition_fats_short">Ж</string>
+    <string name="nutrition_carbs_short">У</string>
+    <string name="nutrition_per_100g">на 100г</string>
+    <string name="nutrition_closed_day">День закрыт</string>
+    <string name="nutrition_chart_period">Период:</string>
+    <string name="nutrition_period_week">Неделя</string>
+    <string name="nutrition_period_month">Месяц</string>
+    <string name="nutrition_period_year">Год</string>
+    <string name="nutrition_empty_list">Здесь пока ничего нет</string>
 
     <!-- Error Handling -->
     <string name="error_db_load">Ошибка при загрузке данных</string>
     <string name="error_db_save">Ошибка при сохранении</string>
     <string name="error_unknown">Произошла непредвиденная ошибка</string>
+
+    <!-- Deletion Confirmation -->
+    <string name="delete_confirm_title">Подтвердите удаление</string>
+    <string name="delete_confirm_msg">Вы уверены, что хотите удалить эту запись? Это действие нельзя отменить.</string>
+    <string name="delete_confirm_btn">Удалить</string>
 
     <!-- Predefined Exercises -->
     <string name="ex_bench_press">Жим лежа</string>
@@ -141,4 +174,29 @@
     <string name="ex_one_leg_extension">Разгибание одной ногой</string>
     <string name="ex_one_leg_extension_muscles">Квадрицепс</string>
     <string name="ex_one_leg_extension_instr">Разгибайте ноги по очереди для более глубокой проработки.</string>
+
+    <!-- Settings & Backup -->
+    <string name="settings_backup_title">Резервное копирование</string>
+    <string name="settings_backup_create">Создать бэкап</string>
+    <string name="settings_backup_restore">Восстановить из файла</string>
+    <string name="settings_backup_restore_confirm_title">Восстановить данные?</string>
+    <string name="settings_backup_restore_confirm_msg">Текущие данные будут полностью заменены данными из файла. Это действие нельзя отменить.</string>
+    <string name="settings_backup_success">Данные успешно сохранены</string>
+    <string name="settings_restore_success">Данные успешно восстановлены</string>
+    <string name="settings_backup_error">Ошибка при работе с файлом</string>
+    <string name="settings_backup_file_name">gymtracker_backup.json</string>
+
+    <!-- App Settings -->
+    <string name="settings_app_rest_timer">Время отдыха (сек)</string>
+    <string name="settings_app_weight_unit">Единицы веса</string>
+    <string name="settings_app_theme">Тема оформления</string>
+    <string name="settings_app_theme_system">Системная</string>
+    <string name="settings_app_theme_light">Светлая</string>
+    <string name="settings_app_theme_dark">Темная</string>
+    <string name="settings_app_dynamic_colors">Динамические цвета (Material You)</string>
+    <string name="settings_app_dynamic_colors_desc">Цвета приложения подстраиваются под обои</string>
+
+    <!-- About -->
+    <string name="about_version">Версия %s</string>
+    <string name="about_desc">GymTracker — ваш персональный помощник в мире спорта и правильного питания.</string>
 </resources>

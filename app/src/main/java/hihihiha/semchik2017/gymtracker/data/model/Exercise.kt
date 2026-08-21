@@ -2,8 +2,10 @@ package hihihiha.semchik2017.gymtracker.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "exercises")
+@Serializable
 data class Exercise(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -13,6 +15,7 @@ data class Exercise(
     val isCustom: Boolean,
     val projectileCount: Int = 1,
     val defaultWeightStep: Double = 2.5,
+    val defaultWeightStepLb: Double = 5.0,
     val muscleGroups: String = "",
     val instructions: String = ""
 )

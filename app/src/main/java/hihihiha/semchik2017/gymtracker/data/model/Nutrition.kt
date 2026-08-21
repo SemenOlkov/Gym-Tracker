@@ -3,8 +3,10 @@ package hihihiha.semchik2017.gymtracker.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "products")
+@Serializable
 data class Product(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
@@ -15,6 +17,7 @@ data class Product(
 )
 
 @Entity(tableName = "nutrition_days")
+@Serializable
 data class NutritionDay(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: Long, // Start of the day in millis
@@ -38,6 +41,7 @@ data class NutritionDay(
         )
     ]
 )
+@Serializable
 data class NutritionEntry(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val dayId: Long,

@@ -26,6 +26,7 @@ fun ExerciseListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var exerciseToDelete by remember { mutableStateOf<Exercise?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -48,11 +49,35 @@ fun ExerciseListScreen(
                     ExerciseItem(
                         exercise = exercise,
                         onClick = { onExerciseClick(exercise.id) },
-                        onDelete = if (exercise.isCustom) { { viewModel.deleteExercise(exercise) } } else null
+                        onDelete = if (exercise.isCustom) { { exerciseToDelete = exercise } } else null
                     )
                 }
             }
         }
+    }
+
+    if (exerciseToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { exerciseToDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_msg)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        exerciseToDelete?.let { viewModel.deleteExercise(it) }
+                        exerciseToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_confirm_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { exerciseToDelete = null }) {
+                    Text(stringResource(R.string.workout_cancel))
+                }
+            }
+        )
     }
 
     if (showAddDialog) {

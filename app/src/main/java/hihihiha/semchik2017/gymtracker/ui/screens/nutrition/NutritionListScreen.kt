@@ -70,6 +70,8 @@ fun NutritionListScreen(
             }
         }
 
+        val dates = remember(filteredDays) { filteredDays.map { it.day.date } }
+
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -97,7 +99,14 @@ fun NutritionListScreen(
                             chart = rememberCartesianChart(
                                 rememberLineCartesianLayer(),
                                 startAxis = rememberStartAxis(),
-                                bottomAxis = rememberBottomAxis(),
+                                bottomAxis = rememberBottomAxis(
+                                    valueFormatter = { x, _, _ ->
+                                        val index = x.toInt()
+                                        if (index in dates.indices) {
+                                            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                                        } else ""
+                                    }
+                                ),
                             ),
                             modelProducer = calModel,
                             modifier = Modifier.fillMaxWidth().height(150.dp)
@@ -110,7 +119,14 @@ fun NutritionListScreen(
                             chart = rememberCartesianChart(
                                 rememberLineCartesianLayer(),
                                 startAxis = rememberStartAxis(),
-                                bottomAxis = rememberBottomAxis(),
+                                bottomAxis = rememberBottomAxis(
+                                    valueFormatter = { x, _, _ ->
+                                        val index = x.toInt()
+                                        if (index in dates.indices) {
+                                            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                                        } else ""
+                                    }
+                                ),
                             ),
                             modelProducer = proModel,
                             modifier = Modifier.fillMaxWidth().height(150.dp)
@@ -123,7 +139,14 @@ fun NutritionListScreen(
                             chart = rememberCartesianChart(
                                 rememberLineCartesianLayer(),
                                 startAxis = rememberStartAxis(),
-                                bottomAxis = rememberBottomAxis(),
+                                bottomAxis = rememberBottomAxis(
+                                    valueFormatter = { x, _, _ ->
+                                        val index = x.toInt()
+                                        if (index in dates.indices) {
+                                            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                                        } else ""
+                                    }
+                                ),
                             ),
                             modelProducer = fatModel,
                             modifier = Modifier.fillMaxWidth().height(150.dp)
@@ -136,7 +159,14 @@ fun NutritionListScreen(
                             chart = rememberCartesianChart(
                                 rememberLineCartesianLayer(),
                                 startAxis = rememberStartAxis(),
-                                bottomAxis = rememberBottomAxis(),
+                                bottomAxis = rememberBottomAxis(
+                                    valueFormatter = { x, _, _ ->
+                                        val index = x.toInt()
+                                        if (index in dates.indices) {
+                                            SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                                        } else ""
+                                    }
+                                ),
                             ),
                             modelProducer = carbModel,
                             modifier = Modifier.fillMaxWidth().height(150.dp)
@@ -228,9 +258,9 @@ fun NutritionDayCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 NutritionInfoItem(summarizedDay.totalCalories.toInt().toString(), stringResource(R.string.nutrition_calories))
-                NutritionInfoItem(String.format(Locale.getDefault(), "%.1f", summarizedDay.totalProteins), stringResource(R.string.nutrition_proteins_short))
-                NutritionInfoItem(String.format(Locale.getDefault(), "%.1f", summarizedDay.totalFats), stringResource(R.string.nutrition_fats_short))
-                NutritionInfoItem(String.format(Locale.getDefault(), "%.1f", summarizedDay.totalCarbs), stringResource(R.string.nutrition_carbs_short))
+                NutritionInfoItem(String.format(Locale.getDefault(), "%.2f", summarizedDay.totalProteins), stringResource(R.string.nutrition_proteins_short))
+                NutritionInfoItem(String.format(Locale.getDefault(), "%.2f", summarizedDay.totalFats), stringResource(R.string.nutrition_fats_short))
+                NutritionInfoItem(String.format(Locale.getDefault(), "%.2f", summarizedDay.totalCarbs), stringResource(R.string.nutrition_carbs_short))
             }
         }
     }

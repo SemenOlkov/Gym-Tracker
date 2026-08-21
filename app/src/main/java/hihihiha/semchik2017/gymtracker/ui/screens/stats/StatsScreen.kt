@@ -11,6 +11,7 @@ import hihihiha.semchik2017.gymtracker.data.model.SetSide
 import hihihiha.semchik2017.gymtracker.domain.usecase.ExerciseStatPoint
 import hihihiha.semchik2017.gymtracker.ui.screens.workout.ExercisePickerDialog
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottomAxis
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
@@ -25,11 +26,12 @@ fun StatsScreen(
     val selectedExercise by viewModel.selectedExercise.collectAsState()
     val stats by viewModel.stats.collectAsState()
     val allExercises by viewModel.allExercises.collectAsState()
+    val unit by viewModel.weightUnit.collectAsState()
     var showExercisePicker by remember { mutableStateOf(false) }
 
     val modelProducer = remember { CartesianChartModelProducer() }
 
-    LaunchedEffect(stats) {
+    LaunchedEffect(stats, unit) {
         if (stats.isNotEmpty()) {
             modelProducer.runTransaction {
                 // Separate series for different sides if unilateral
@@ -37,9 +39,9 @@ fun StatsScreen(
                 val leftStats = stats.filter { it.side == SetSide.LEFT }
                 val rightStats = stats.filter { it.side == SetSide.RIGHT }
 
-                if (bilateralStats.isNotEmpty()) lineSeries { series(bilateralStats.map { it.maxWeight }) }
-                if (leftStats.isNotEmpty()) lineSeries { series(leftStats.map { it.maxWeight }) }
-                if (rightStats.isNotEmpty()) lineSeries { series(rightStats.map { it.maxWeight }) }
+                if (bilateralStats.isNotEmpty()) lineSeries { series(bilateralStats.map { if (unit == "lb") it.maxWeightLb else it.maxWeightKg }) }
+                if (leftStats.isNotEmpty()) lineSeries { series(leftStats.map { if (unit == "lb") it.maxWeightLb else it.maxWeightKg }) }
+                if (rightStats.isNotEmpty()) lineSeries { series(rightStats.map { if (unit == "lb") it.maxWeightLb else it.maxWeightKg }) }
             }
         }
     }
@@ -55,9 +57,18 @@ fun StatsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         if (stats.isNotEmpty()) {
+            val dates = remember(stats) { stats.map { it.date } }
             CartesianChartHost(
                 chart = rememberCartesianChart(
                     rememberLineCartesianLayer(),
+                    bottomAxis = rememberBottomAxis(
+                        valueFormatter = { x, _, _ ->
+                            val index = x.toInt()
+                            if (index in dates.indices) {
+                                SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                            } else ""
+                        }
+                    )
                 ),
                 modelProducer = modelProducer,
                 modifier = Modifier.fillMaxWidth().height(300.dp)
@@ -68,7 +79,9 @@ fun StatsScreen(
             Text("История максимумов:", style = MaterialTheme.typography.titleMedium)
             stats.reversed().forEach { point ->
                 val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(point.date))
-                Text("$dateStr: ${point.maxWeight} кг ${if (point.side != SetSide.BOTH) "(${point.side})" else ""}")
+                val weightVal = if (unit == "lb") point.maxWeightLb else point.maxWeightKg
+                val sideStr = if (point.side != SetSide.BOTH) " (${point.side})" else ""
+                Text("$dateStr: ${String.format(Locale.getDefault(), "%.2f", weightVal)} $unit$sideStr")
             }
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

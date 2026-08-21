@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import hihihiha.semchik2017.gymtracker.R
 import hihihiha.semchik2017.gymtracker.data.dao.GymDao
 import hihihiha.semchik2017.gymtracker.data.dao.NutritionDao
+import hihihiha.semchik2017.gymtracker.data.dao.BackupDao
 import hihihiha.semchik2017.gymtracker.data.model.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,13 +19,14 @@ import kotlinx.coroutines.launch
         Exercise::class, Workout::class, WorkoutExercise::class, ExerciseSet::class, BodyWeight::class,
         Product::class, NutritionDay::class, NutritionEntry::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class GymDatabase : RoomDatabase() {
     abstract fun gymDao(): GymDao
     abstract fun nutritionDao(): NutritionDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         @Volatile
@@ -38,7 +40,7 @@ abstract class GymDatabase : RoomDatabase() {
                     "gym_database"
                 )
                 .addCallback(GymDatabaseCallback(context.applicationContext, scope))
-                .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build()
                 INSTANCE = instance
                 instance
@@ -83,6 +85,23 @@ abstract class GymDatabase : RoomDatabase() {
                 """)
             }
         }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Exercise Sets
+                db.execSQL("ALTER TABLE exercise_sets RENAME COLUMN weight TO weightKg")
+                db.execSQL("ALTER TABLE exercise_sets ADD COLUMN weightLb REAL")
+                db.execSQL("UPDATE exercise_sets SET weightLb = weightKg * 2.20462")
+
+                // Body Weights
+                db.execSQL("ALTER TABLE body_weights RENAME COLUMN weight TO weightKg")
+                db.execSQL("ALTER TABLE body_weights ADD COLUMN weightLb REAL NOT NULL DEFAULT 0.0")
+                db.execSQL("UPDATE body_weights SET weightLb = weightKg * 2.20462")
+
+                // Exercises
+                db.execSQL("ALTER TABLE exercises ADD COLUMN defaultWeightStepLb REAL NOT NULL DEFAULT 5.0")
+            }
+        }
     }
 
     private class GymDatabaseCallback(
@@ -110,6 +129,8 @@ abstract class GymDatabase : RoomDatabase() {
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
                     projectileCount = 1,
+                    defaultWeightStep = 2.5,
+                    defaultWeightStepLb = 5.0,
                     muscleGroups = context.getString(R.string.ex_bench_press_muscles),
                     instructions = context.getString(R.string.ex_bench_press_instr)
                 ),
@@ -120,6 +141,8 @@ abstract class GymDatabase : RoomDatabase() {
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
                     projectileCount = 2,
+                    defaultWeightStep = 2.5,
+                    defaultWeightStepLb = 5.0,
                     muscleGroups = context.getString(R.string.ex_dumbell_fly_muscles),
                     instructions = context.getString(R.string.ex_dumbell_fly_instr)
                 ),
@@ -202,6 +225,8 @@ abstract class GymDatabase : RoomDatabase() {
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
                     projectileCount = 0,
+                    defaultWeightStep = 0.0,
+                    defaultWeightStepLb = 0.0,
                     muscleGroups = context.getString(R.string.ex_upper_abs_muscles),
                     instructions = context.getString(R.string.ex_upper_abs_instr)
                 ),
@@ -212,6 +237,8 @@ abstract class GymDatabase : RoomDatabase() {
                     laterality = Laterality.BILATERAL,
                     isCustom = false,
                     projectileCount = 0,
+                    defaultWeightStep = 0.0,
+                    defaultWeightStepLb = 0.0,
                     muscleGroups = context.getString(R.string.ex_lower_abs_muscles),
                     instructions = context.getString(R.string.ex_lower_abs_instr)
                 ),

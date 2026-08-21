@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import hihihiha.semchik2017.gymtracker.data.model.Exercise
 import hihihiha.semchik2017.gymtracker.domain.repository.GymRepository
+import hihihiha.semchik2017.gymtracker.domain.repository.SettingsRepository
 import hihihiha.semchik2017.gymtracker.domain.usecase.ExerciseStatPoint
 import hihihiha.semchik2017.gymtracker.domain.usecase.GetExerciseStatsUseCase
 import kotlinx.coroutines.flow.*
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class StatsViewModel @Inject constructor(
     private val repository: GymRepository,
+    private val settingsRepository: SettingsRepository,
     private val getExerciseStatsUseCase: GetExerciseStatsUseCase
 ) : ViewModel() {
 
@@ -22,6 +24,10 @@ class StatsViewModel @Inject constructor(
 
     private val _stats = MutableStateFlow<List<ExerciseStatPoint>>(emptyList())
     val stats: StateFlow<List<ExerciseStatPoint>> = _stats.asStateFlow()
+
+    val weightUnit = settingsRepository.weightUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "kg")
+
 
     val allExercises = repository.getAllExercises()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

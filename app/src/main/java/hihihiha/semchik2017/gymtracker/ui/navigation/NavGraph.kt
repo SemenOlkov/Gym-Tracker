@@ -12,6 +12,9 @@ import hihihiha.semchik2017.gymtracker.ui.screens.exercise.ExerciseDetailScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.weight.WeightScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.nutrition.NutritionListScreen
 import hihihiha.semchik2017.gymtracker.ui.screens.nutrition.NutritionDetailScreen
+import hihihiha.semchik2017.gymtracker.ui.screens.settings.AppSettingsScreen
+import hihihiha.semchik2017.gymtracker.ui.screens.settings.BackupScreen
+import hihihiha.semchik2017.gymtracker.ui.screens.settings.AboutScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -63,6 +66,15 @@ fun NavGraph(navController: NavHostController) {
                 dayId = args.dayId,
                 onBack = { navController.popBackStack() }
             )
+        }
+        composable<Screen.AppSettings> {
+            AppSettingsScreen()
+        }
+        composable<Screen.Backup> {
+            BackupScreen()
+        }
+        composable<Screen.About> {
+            AboutScreen()
         }
     }
 }

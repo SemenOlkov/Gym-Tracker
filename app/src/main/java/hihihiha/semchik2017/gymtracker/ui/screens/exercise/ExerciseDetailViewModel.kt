@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import hihihiha.semchik2017.gymtracker.data.dao.PRResult
 import hihihiha.semchik2017.gymtracker.data.model.*
 import hihihiha.semchik2017.gymtracker.domain.repository.GymRepository
+import hihihiha.semchik2017.gymtracker.domain.repository.SettingsRepository
 import hihihiha.semchik2017.gymtracker.domain.usecase.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,6 +15,7 @@ import javax.inject.Inject
 @HiltViewModel
 class ExerciseDetailViewModel @Inject constructor(
     private val repository: GymRepository,
+    private val settingsRepository: SettingsRepository,
     private val getWeightRecommendationUseCase: GetWeightRecommendationUseCase,
     private val getExerciseStatsUseCase: GetExerciseStatsUseCase
 ) : ViewModel() {
@@ -25,6 +27,7 @@ class ExerciseDetailViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(isLoading = true)
+                val unit = settingsRepository.weightUnit.first()
                 val ex = repository.getAllExercises().firstOrNull()?.find { it.id == exerciseId }
                 
                 if (ex != null) {
@@ -50,6 +53,7 @@ class ExerciseDetailViewModel @Inject constructor(
                         recommendation = recommendation,
                         stats = stats,
                         prs = prMap,
+                        unit = unit,
                         lastWorkoutDate = lastDate,
                         errorMessage = null
                     )

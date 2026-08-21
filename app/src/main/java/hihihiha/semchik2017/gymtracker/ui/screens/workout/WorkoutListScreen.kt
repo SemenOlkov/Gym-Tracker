@@ -28,6 +28,7 @@ fun WorkoutListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showCreateDialog by remember { mutableStateOf(false) }
+    var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
 
     Scaffold(
         floatingActionButton = {
@@ -62,12 +63,36 @@ fun WorkoutListScreen(
                         WorkoutItem(
                             workout = workout,
                             onClick = { onWorkoutClick(workout.id) },
-                            onDelete = { viewModel.deleteWorkout(workout) }
+                            onDelete = { workoutToDelete = workout }
                         )
                     }
                 }
             }
         }
+    }
+
+    if (workoutToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { workoutToDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_msg)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        workoutToDelete?.let { viewModel.deleteWorkout(it) }
+                        workoutToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_confirm_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { workoutToDelete = null }) {
+                    Text(stringResource(R.string.workout_cancel))
+                }
+            }
+        )
     }
 
     if (showCreateDialog) {
@@ -158,8 +183,10 @@ fun WorkoutItem(
                     style = if (workout.name == null) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodySmall
                 )
             }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel))
+            if (!workout.isCompleted) {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel))
+                }
             }
         }
     }

@@ -13,6 +13,9 @@ sealed interface Screen {
     @Serializable object Exercises : Screen
     @Serializable object Nutrition : Screen
     @Serializable object Weight : Screen
+    @Serializable object AppSettings : Screen
+    @Serializable object Backup : Screen
+    @Serializable object About : Screen
     
     @Serializable 
     data class ExerciseDetail(val exerciseId: Long) : Screen

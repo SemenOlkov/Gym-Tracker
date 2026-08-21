@@ -3,6 +3,7 @@ package hihihiha.semchik2017.gymtracker.data.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 @Entity(
     tableName = "workout_exercises",
@@ -21,6 +22,7 @@ import androidx.room.PrimaryKey
         )
     ]
 )
+@Serializable
 data class WorkoutExercise(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val workoutId: Long,

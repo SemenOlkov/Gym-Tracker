@@ -6,11 +6,11 @@ import javax.inject.Inject
 class CalculateStatsUseCase @Inject constructor() {
     
     fun calculateOneRepMax(weight: Double?, reps: Int, bodyWeight: Double = 0.0, isAssisted: Boolean = false): Double {
-        if (reps == 0) return 0.0
+        if (reps == 0 || weight == null) return 0.0
         val effectiveWeight = if (isAssisted) {
-            (bodyWeight - (weight ?: 0.0)).coerceAtLeast(0.0)
+            (bodyWeight - weight).coerceAtLeast(0.0)
         } else {
-            weight ?: 0.0
+            weight
         }
         
         if (effectiveWeight == 0.0) return 0.0
@@ -20,15 +20,19 @@ class CalculateStatsUseCase @Inject constructor() {
     }
 
     fun calculateVolume(weight: Double?, reps: Int, projectileCount: Int = 1, bodyWeight: Double = 0.0, isAssisted: Boolean = false): Double {
+        if (weight == null) return 0.0
         val effectiveWeight = if (isAssisted) {
-            (bodyWeight - (weight ?: 0.0)).coerceAtLeast(0.0)
+            (bodyWeight - weight).coerceAtLeast(0.0)
         } else {
-            weight ?: 0.0
+            weight
         }
         return effectiveWeight * reps * projectileCount
     }
 
-    fun calculateTotalVolume(sets: List<ExerciseSet>, projectileCount: Int = 1, bodyWeight: Double = 0.0, isAssisted: Boolean = false): Double {
-        return sets.sumOf { calculateVolume(it.weight, it.reps, projectileCount, bodyWeight, isAssisted) }
+    fun calculateTotalVolume(sets: List<ExerciseSet>, unit: String = "kg", projectileCount: Int = 1, bodyWeight: Double = 0.0, isAssisted: Boolean = false): Double {
+        return sets.sumOf { 
+            val weight = if (unit == "lb") it.weightLb else it.weightKg
+            calculateVolume(weight, it.reps, projectileCount, bodyWeight, isAssisted) 
+        }
     }
 }

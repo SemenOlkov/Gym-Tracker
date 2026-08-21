@@ -63,12 +63,12 @@ interface GymDao {
     @Delete
     suspend fun deleteBodyWeight(bodyWeight: BodyWeight)
 
-    @Query("SELECT weight FROM body_weights ORDER BY date DESC LIMIT 1")
+    @Query("SELECT weightKg FROM body_weights ORDER BY date DESC LIMIT 1")
     suspend fun getLatestBodyWeight(): Double?
 
     // Analytics and Recommendations
     @Query("""
-        SELECT w.date, s.weight, s.reps, s.side FROM exercise_sets s
+        SELECT w.date, s.weightKg as weightKg, s.weightLb, s.reps, s.side FROM exercise_sets s
         INNER JOIN workout_exercises we ON s.workoutExerciseId = we.id
         INNER JOIN workouts w ON we.workoutId = w.id
         WHERE we.exerciseId = :exerciseId AND w.isCompleted = 1
@@ -89,20 +89,21 @@ interface GymDao {
     suspend fun getExerciseById(id: Long): Exercise?
 
     @Query("""
-        SELECT s.weight as maxWeight, w.date FROM exercise_sets s
+        SELECT s.weightKg as weightKg, s.weightLb as weightLb, w.date FROM exercise_sets s
         INNER JOIN workout_exercises we ON s.workoutExerciseId = we.id
         INNER JOIN workouts w ON we.workoutId = w.id
         INNER JOIN exercises e ON we.exerciseId = e.id
-        WHERE we.exerciseId = :exerciseId AND s.weight IS NOT NULL AND s.side = :side AND w.isCompleted = 1
+        WHERE we.exerciseId = :exerciseId AND s.weightKg IS NOT NULL AND s.side = :side AND w.isCompleted = 1
         ORDER BY 
-            CASE WHEN e.progressionType = 'INCREASE' THEN s.weight END DESC,
-            CASE WHEN e.progressionType = 'DECREASE' THEN s.weight END ASC,
+            CASE WHEN e.progressionType = 'INCREASE' THEN s.weightKg END DESC,
+            CASE WHEN e.progressionType = 'DECREASE' THEN s.weightKg END ASC,
             w.date DESC LIMIT 1
     """)
     suspend fun getPersonalRecord(exerciseId: Long, side: SetSide = SetSide.BOTH): PRResult?
 }
 
 data class PRResult(
-    val maxWeight: Double,
+    val weightKg: Double,
+    val weightLb: Double,
     val date: Long
 )

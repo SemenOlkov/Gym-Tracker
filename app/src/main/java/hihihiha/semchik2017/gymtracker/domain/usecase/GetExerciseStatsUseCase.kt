@@ -19,15 +19,24 @@ class GetExerciseStatsUseCase @Inject constructor(
         return history.groupBy { it.date }
             .map { (date, sets) ->
                 val statsBySide = sets.groupBy { it.side }.map { (side, sideSets) ->
-                    val bestWeight = if (isDecrease) {
-                        sideSets.mapNotNull { it.weight }.minOrNull() ?: 0.0
+                    val bestWeightKg = if (isDecrease) {
+                        sideSets.mapNotNull { it.weightKg }.minOrNull() ?: 0.0
                     } else {
-                        sideSets.mapNotNull { it.weight }.maxOrNull() ?: 0.0
+                        sideSets.mapNotNull { it.weightKg }.maxOrNull() ?: 0.0
                     }
-                    val totalVolume = sideSets.sumOf { calculateStatsUseCase.calculateVolume(it.weight, it.reps, projectileCount, bodyWeight, isAssisted = isDecrease) }
-                    val max1RM = sideSets.maxOfOrNull { calculateStatsUseCase.calculateOneRepMax(it.weight, it.reps, bodyWeight, isAssisted = isDecrease) } ?: 0.0
+                    val bestWeightLb = if (isDecrease) {
+                        sideSets.mapNotNull { it.weightLb }.minOrNull() ?: 0.0
+                    } else {
+                        sideSets.mapNotNull { it.weightLb }.maxOrNull() ?: 0.0
+                    }
+
+                    val totalVolumeKg = sideSets.sumOf { calculateStatsUseCase.calculateVolume(it.weightKg, it.reps, projectileCount, bodyWeight, isAssisted = isDecrease) }
+                    val totalVolumeLb = sideSets.sumOf { calculateStatsUseCase.calculateVolume(it.weightLb, it.reps, projectileCount, bodyWeight * 2.20462, isAssisted = isDecrease) }
+
+                    val max1RMKg = sideSets.maxOfOrNull { calculateStatsUseCase.calculateOneRepMax(it.weightKg, it.reps, bodyWeight, isAssisted = isDecrease) } ?: 0.0
+                    val max1RMLb = sideSets.maxOfOrNull { calculateStatsUseCase.calculateOneRepMax(it.weightLb, it.reps, bodyWeight * 2.20462, isAssisted = isDecrease) } ?: 0.0
                     
-                    ExerciseStatPoint(date, bestWeight, side, totalVolume, max1RM)
+                    ExerciseStatPoint(date, bestWeightKg, bestWeightLb, side, totalVolumeKg, totalVolumeLb, max1RMKg, max1RMLb)
                 }
                 statsBySide
             }
@@ -38,8 +47,11 @@ class GetExerciseStatsUseCase @Inject constructor(
 
 data class ExerciseStatPoint(
     val date: Long,
-    val maxWeight: Double,
+    val maxWeightKg: Double,
+    val maxWeightLb: Double,
     val side: SetSide,
-    val totalVolume: Double = 0.0,
-    val max1RM: Double = 0.0
+    val totalVolumeKg: Double = 0.0,
+    val totalVolumeLb: Double = 0.0,
+    val max1RMKg: Double = 0.0,
+    val max1RMLb: Double = 0.0
 )

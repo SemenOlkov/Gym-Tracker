@@ -32,6 +32,7 @@ fun NutritionDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var entryToDelete by remember { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(dayId) {
         viewModel.loadDayDetails(dayId)
@@ -86,12 +87,36 @@ fun NutritionDetailScreen(
                     items(uiState.entries) { entry ->
                         EntryItem(
                             entry = entry,
-                            onDelete = if (uiState.day?.isClosed == false) { { viewModel.deleteEntry(entry.entryId) } } else null
+                            onDelete = if (uiState.day?.isClosed == false) { { entryToDelete = entry.entryId } } else null
                         )
                     }
                 }
             }
         }
+    }
+
+    if (entryToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { entryToDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_msg)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        entryToDelete?.let { viewModel.deleteEntry(it) }
+                        entryToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_confirm_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { entryToDelete = null }) {
+                    Text(stringResource(R.string.workout_cancel))
+                }
+            }
+        )
     }
 
     if (showAddDialog) {
@@ -118,9 +143,9 @@ fun SummarySection(calories: Double, proteins: Double, fats: Double, carbs: Doub
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         SummaryItem(calories.toInt().toString(), stringResource(R.string.nutrition_calories))
-        SummaryItem(String.format(Locale.getDefault(), "%.1f", proteins), stringResource(R.string.nutrition_proteins_short))
-        SummaryItem(String.format(Locale.getDefault(), "%.1f", fats), stringResource(R.string.nutrition_fats_short))
-        SummaryItem(String.format(Locale.getDefault(), "%.1f", carbs), stringResource(R.string.nutrition_carbs_short))
+        SummaryItem(String.format(Locale.getDefault(), "%.2f", proteins), stringResource(R.string.nutrition_proteins_short))
+        SummaryItem(String.format(Locale.getDefault(), "%.2f", fats), stringResource(R.string.nutrition_fats_short))
+        SummaryItem(String.format(Locale.getDefault(), "%.2f", carbs), stringResource(R.string.nutrition_carbs_short))
     }
 }
 

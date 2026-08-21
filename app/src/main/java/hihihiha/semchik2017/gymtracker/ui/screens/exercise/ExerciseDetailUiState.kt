@@ -12,6 +12,7 @@ data class ExerciseDetailUiState(
     val recommendation: RecommendationResult = RecommendationResult.NoData,
     val stats: List<ExerciseStatPoint> = emptyList(),
     val prs: Map<SetSide, PRResult> = emptyMap(),
+    val unit: String = "kg",
     val lastWorkoutDate: Long? = null,
     val errorMessage: String? = null
 )

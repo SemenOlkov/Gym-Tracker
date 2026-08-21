@@ -36,6 +36,7 @@ fun WeightScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var weightToDelete by remember { mutableStateOf<BodyWeight?>(null) }
     
     val modelProducer = remember { CartesianChartModelProducer() }
 
@@ -43,7 +44,7 @@ fun WeightScreen(
         if (uiState.weightHistory.isNotEmpty()) {
             modelProducer.runTransaction {
                 lineSeries {
-                    series(uiState.weightHistory.reversed().map { it.weight })
+                    series(uiState.weightHistory.reversed().map { if (uiState.unit == "lb") it.weightLb else it.weightKg })
                 }
             }
         }
@@ -56,6 +57,8 @@ fun WeightScreen(
             }
         }
     ) { padding ->
+        val dates = remember(uiState.weightHistory) { uiState.weightHistory.reversed().map { it.date } }
+        
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -77,11 +80,17 @@ fun WeightScreen(
                             rememberLineCartesianLayer(),
                             startAxis = rememberStartAxis(
                                 label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
-                                title = stringResource(R.string.set_label_kg),
+                                title = uiState.unit,
                                 titleComponent = rememberTextComponent(color = MaterialTheme.colorScheme.secondary)
                             ),
                             bottomAxis = rememberBottomAxis(
                                 label = rememberTextComponent(color = MaterialTheme.colorScheme.onSurface),
+                                valueFormatter = { x, _, _ ->
+                                    val index = x.toInt()
+                                    if (index in dates.indices) {
+                                        SimpleDateFormat("dd.MM", Locale.getDefault()).format(Date(dates[index]))
+                                    } else ""
+                                }
                             ),
                             marker = rememberDefaultCartesianMarker(
                                 label = rememberTextComponent(
@@ -102,7 +111,8 @@ fun WeightScreen(
                     items(uiState.weightHistory) { entry ->
                         WeightItem(
                             entry = entry,
-                            onDelete = { viewModel.deleteWeight(entry) }
+                            unit = uiState.unit,
+                            onDelete = { weightToDelete = entry }
                         )
                     }
                 }
@@ -110,8 +120,33 @@ fun WeightScreen(
         }
     }
 
+    if (weightToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { weightToDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_msg)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        weightToDelete?.let { viewModel.deleteWeight(it) }
+                        weightToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_confirm_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { weightToDelete = null }) {
+                    Text(stringResource(R.string.workout_cancel))
+                }
+            }
+        )
+    }
+
     if (showAddDialog) {
         AddWeightDialog(
+            unit = uiState.unit,
             onDismiss = { showAddDialog = false },
             onConfirm = { 
                 viewModel.addWeight(it)
@@ -122,7 +157,7 @@ fun WeightScreen(
 }
 
 @Composable
-fun WeightItem(entry: BodyWeight, onDelete: () -> Unit) {
+fun WeightItem(entry: BodyWeight, unit: String, onDelete: () -> Unit) {
     val dateStr = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(entry.date))
     Card(
         modifier = Modifier
@@ -139,7 +174,8 @@ fun WeightItem(entry: BodyWeight, onDelete: () -> Unit) {
         ) {
             Column {
                 Text(text = dateStr, style = MaterialTheme.typography.bodyLarge)
-                Text(text = stringResource(R.string.weight_unit, entry.weight.toString()), style = MaterialTheme.typography.titleMedium)
+                val weightVal = if (unit == "lb") entry.weightLb else entry.weightKg
+                Text(text = String.format(Locale.getDefault(), "%.2f %s", weightVal, unit), style = MaterialTheme.typography.titleMedium)
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.workout_cancel), tint = MaterialTheme.colorScheme.error)
@@ -149,7 +185,7 @@ fun WeightItem(entry: BodyWeight, onDelete: () -> Unit) {
 }
 
 @Composable
-fun AddWeightDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
+fun AddWeightDialog(unit: String, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
     var weightStr by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -159,7 +195,7 @@ fun AddWeightDialog(onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
             OutlinedTextField(
                 value = weightStr,
                 onValueChange = { weightStr = it.replace(',', '.') },
-                label = { Text(stringResource(R.string.weight_hint)) },
+                label = { Text("${stringResource(R.string.weight_hint)} ($unit)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )

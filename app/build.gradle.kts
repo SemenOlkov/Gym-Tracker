@@ -17,7 +17,7 @@ android {
         minSdk = 27
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0.3"
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.datastore.preferences)
 
     // Room
     implementation(libs.room.runtime)

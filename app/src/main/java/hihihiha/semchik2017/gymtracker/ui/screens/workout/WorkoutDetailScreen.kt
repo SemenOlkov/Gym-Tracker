@@ -1,3 +1,4 @@
+
 package hihihiha.semchik2017.gymtracker.ui.screens.workout
 
 import androidx.compose.foundation.clickable
@@ -44,6 +45,7 @@ fun WorkoutDetailScreen(
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showCompleteConfirmDialog by remember { mutableStateOf(false) }
+    var setToDelete by remember { mutableStateOf<ExerciseSet?>(null) }
 
     val isCompleted = uiState.workoutWithExercises?.workout?.isCompleted == true
 
@@ -57,7 +59,12 @@ fun WorkoutDetailScreen(
                 title = { 
                     Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(uiState.workoutWithExercises?.workout?.name ?: stringResource(R.string.nav_workouts))
+                            Text(
+                                text = uiState.workoutWithExercises?.workout?.name ?: stringResource(R.string.nav_workouts),
+                                maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
                             if (isCompleted) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(
@@ -106,15 +113,14 @@ fun WorkoutDetailScreen(
                         IconButton(onClick = { showRenameDialog = true }) {
                             Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.workout_rename))
                         }
-                        Button(
+                        FilledIconButton(
                             onClick = { showCompleteConfirmDialog = true },
-                            modifier = Modifier.padding(end = 8.dp),
-                            colors = ButtonDefaults.buttonColors(
+                            colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             )
                         ) {
-                            Text(stringResource(R.string.workout_complete), fontWeight = FontWeight.Bold)
+                            Icon(Icons.Default.Done, contentDescription = stringResource(R.string.workout_complete))
                         }
                     }
                 }
@@ -151,13 +157,38 @@ fun WorkoutDetailScreen(
                         onAddSet = { side -> viewModel.addSet(exerciseWithSets.workoutExercise.id, side) },
                         onUpdateSet = { viewModel.updateSet(it) },
                         onCompleteSet = { viewModel.completeSet(it) },
-                        onDeleteSet = { viewModel.deleteSet(it) },
+                        onDeleteSet = { setToDelete = it },
                         calculateStatsUseCase = viewModel.calculateStatsUseCase,
-                        bodyWeight = uiState.bodyWeight
+                        bodyWeight = uiState.bodyWeight,
+                        unit = uiState.unit
                     )
                 }
             }
         }
+    }
+
+    if (setToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { setToDelete = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_msg)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        setToDelete?.let { viewModel.deleteSet(it) }
+                        setToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete_confirm_btn))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { setToDelete = null }) {
+                    Text(stringResource(R.string.workout_cancel))
+                }
+            }
+        )
     }
 
     if (showCompleteConfirmDialog) {
@@ -214,7 +245,8 @@ fun ExerciseCard(
     onCompleteSet: (ExerciseSet) -> Unit,
     onDeleteSet: (ExerciseSet) -> Unit,
     calculateStatsUseCase: CalculateStatsUseCase,
-    bodyWeight: Double
+    bodyWeight: Double,
+    unit: String
 ) {
     Card(
         modifier = Modifier
@@ -225,48 +257,62 @@ fun ExerciseCard(
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = exerciseWithSets.exercise.name, style = MaterialTheme.typography.titleLarge)
-                
-                val totalVolume = calculateStatsUseCase.calculateTotalVolume(
-                    exerciseWithSets.sets.filter { it.isCompleted },
-                    exerciseWithSets.exercise.projectileCount,
-                    bodyWeight = bodyWeight,
-                    isAssisted = exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE
-                )
+            Text(
+                text = exerciseWithSets.exercise.name,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+            
+            val totalVolume = calculateStatsUseCase.calculateTotalVolume(
+                exerciseWithSets.sets.filter { it.isCompleted },
+                unit = unit,
+                projectileCount = exerciseWithSets.exercise.projectileCount,
+                bodyWeight = bodyWeight,
+                isAssisted = exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Recommendation
+                Box(modifier = Modifier.weight(1f)) {
+                    recommendation?.let { rec ->
+                        val text = when (rec) {
+                            is RecommendationResult.Bilateral -> String.format(Locale.getDefault(), "%.2f %s", rec.weight, unit)
+                            is RecommendationResult.Unilateral -> {
+                                val left = rec.leftWeight?.let { String.format(Locale.getDefault(), "Л: %.2f %s", it, unit) } ?: ""
+                                val right = rec.rightWeight?.let { String.format(Locale.getDefault(), "П: %.2f %s", it, unit) } ?: ""
+                                stringResource(R.string.set_recommendation_unilateral, "$left $right".trim())
+                            }
+                            else -> null
+                        }
+                        text?.let {
+                            Surface(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text(
+                                    text = it,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Volume
                 if (totalVolume > 0) {
                     Text(
-                        stringResource(R.string.workout_volume_label, totalVolume.toInt()),
+                        "${stringResource(R.string.workout_volume_label_plain)}: ${String.format(Locale.getDefault(), "%.2f", totalVolume)} $unit",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Bold
                     )
-                }
-            }
-            
-            recommendation?.let { rec ->
-                val text = when (rec) {
-                    is RecommendationResult.Bilateral -> stringResource(R.string.set_recommendation, rec.weight.toString())
-                    is RecommendationResult.Unilateral -> {
-                        val left = rec.leftWeight?.let { "Л: $it кг" } ?: ""
-                        val right = rec.rightWeight?.let { "П: $it кг" } ?: ""
-                        stringResource(R.string.set_recommendation_unilateral, "$left $right".trim())
-                    }
-                    else -> null
-                }
-                text?.let {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = it,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
                 }
             }
 
@@ -278,7 +324,7 @@ fun ExerciseCard(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.exercise_side_left), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.LEFT }.forEach { set ->
-                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, unit, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.LEFT) }) { Text(stringResource(R.string.set_add_left_btn)) }
@@ -288,7 +334,7 @@ fun ExerciseCard(
                     
                     Text(stringResource(R.string.exercise_side_right), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                     exerciseWithSets.sets.filter { it.side == SetSide.RIGHT }.forEach { set ->
-                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
+                        SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, unit, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                     }
                     if (!readOnly) {
                         TextButton(onClick = { onAddSet(SetSide.RIGHT) }) { Text(stringResource(R.string.set_add_right_btn)) }
@@ -296,7 +342,7 @@ fun ExerciseCard(
                 }
             } else {
                 exerciseWithSets.sets.forEach { set ->
-                    SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
+                    SetRow(set, exerciseWithSets.exercise.isWeighted, readOnly, onUpdateSet, onCompleteSet, onDeleteSet, calculateStatsUseCase, bodyWeight, unit, exerciseWithSets.exercise.progressionType == ProgressionType.DECREASE)
                 }
                 if (!readOnly) {
                     Button(onClick = { onAddSet(SetSide.BOTH) }, modifier = Modifier.padding(top = 8.dp)) { 
@@ -318,16 +364,20 @@ fun SetRow(
     onDeleteSet: (ExerciseSet) -> Unit,
     calculateStatsUseCase: CalculateStatsUseCase,
     bodyWeight: Double,
+    unit: String,
     isAssisted: Boolean
 ) {
-    // Formatting helper to avoid .0 when not needed
+    // Formatting helper to avoid unnecessary zeros but limit to 2 decimal places
     fun formatDouble(d: Double?): String = when {
         d == null -> ""
         d % 1.0 == 0.0 -> d.toInt().toString()
-        else -> d.toString()
+        else -> String.format(Locale.getDefault(), "%.2f", d)
     }
 
-    var weightText by remember(set.id) { mutableStateOf(formatDouble(set.weight)) }
+    var weightText by remember(set.id, unit) { 
+        val w = if (unit == "lb") set.weightLb else set.weightKg
+        mutableStateOf(formatDouble(w)) 
+    }
     var repsText by remember(set.id) { mutableStateOf(set.reps.toString()) }
     var noteText by remember(set.id) { mutableStateOf(set.note ?: "") }
     var showNote by remember { mutableStateOf(set.note?.isNotBlank() == true) }
@@ -346,15 +396,17 @@ fun SetRow(
                     value = weightText,
                     onValueChange = { 
                         weightText = it
-                        val newWeight = it.replace(',', '.').toDoubleOrNull()
-                        if (newWeight != null || it.isEmpty()) {
-                            onUpdateSet(set.copy(weight = newWeight))
+                        val newVal = it.replace(',', '.').toDoubleOrNull()
+                        if (newVal != null || it.isEmpty()) {
+                            val newKg = if (unit == "lb") newVal?.let { it / 2.20462 } else newVal
+                            val newLb = if (unit == "lb") newVal else newVal?.let { it * 2.20462 }
+                            onUpdateSet(set.copy(weightKg = newKg, weightLb = newLb))
                         }
                     },
                     enabled = !isSetReadOnly,
                     modifier = Modifier.width(90.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    label = { Text(stringResource(R.string.set_label_kg)) },
+                    label = { Text(unit) },
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -396,10 +448,11 @@ fun SetRow(
                     modifier = Modifier.padding(horizontal = 8.dp).size(24.dp)
                 )
                 if (isWeighted) {
-                    val onerepmax = calculateStatsUseCase.calculateOneRepMax(set.weight, set.reps, bodyWeight, isAssisted)
+                    val weight = if (unit == "lb") set.weightLb else set.weightKg
+                    val onerepmax = calculateStatsUseCase.calculateOneRepMax(weight, set.reps, bodyWeight, isAssisted)
                     if (onerepmax > 0) {
                         Text(
-                            "1RM: ${String.format(Locale.getDefault(), "%.1f", onerepmax)}",
+                            "1RM: ${String.format(Locale.getDefault(), "%.2f", onerepmax)} $unit",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.tertiary
                         )
